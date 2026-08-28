@@ -23,6 +23,36 @@ archive: <user-home>/.codex/build-runs/<run-slug>/status
 
 Preserve the integration worktree and branch as the delivery artifact. Never force-push, reset, implicitly stash, or merge into the base branch.
 
+## Commit-subject policy
+
+Every commit created by Build, Blue Team, Fixer Team, or a Build-directed
+specialist must follow [$implement:feat-commit-no-scope](../feat-commit-no-scope/SKILL.md).
+Inspect the staged diff, use a scope-free `type: concrete outcome` subject, and
+validate it before committing:
+
+```bash
+node <plugin>/skills/feat-commit-no-scope/scripts/validate_commit_subject.js \
+  "type: concrete outcome"
+```
+
+This applies to release and integration commits as well: use
+`chore: merge <concrete description>` for merge commits. Do not use a
+parenthesized scope or `!` marker.
+
+## Named workflow skills
+
+Build routes supporting work through named skills rather than treating their
+methods as implicit: Brainstorm conditionally invokes
+[$implement:audit-regression-readiness](../audit-regression-readiness/SKILL.md)
+and [$implement:capture-behavioral-baseline](../capture-behavioral-baseline/SKILL.md);
+Blue Team uses [$implement:bug-validation-and-regression](../bug-validation-and-regression/SKILL.md)
+and, for observable flows, [$implement:run](../run/SKILL.md); Red Team uses
+[$implement:bug-finding-review](../bug-finding-review/SKILL.md); and Fixer
+Team uses the individual evidence/hypothesis chain named in its own workflow.
+At final integration, invoke [$implement:verify](../verify/SKILL.md) for the
+applicable runtime and regression proof. Record a limitation instead of
+claiming a skill was run when a repository cannot support it.
+
 Initialize status and the handoff ledger immediately. Start the bundled dashboard before Brainstorm:
 
 Use the locked dashboard source in [assets/dashboard](assets/dashboard/); do not recreate its client or add another updater.
@@ -46,13 +76,13 @@ Run stages serially. Every team orchestration and specialist delegation must sta
 
 Aim to finish within 30 minutes. Before every team or specialist launch, run `build-handoff.mjs time-budget`. At `target-exceeded`, stop expanding investigation and defer non-blocking findings. At `hard-stop` (45 minutes), launch no new agents: finish only an already-running deterministic check, then deliver the best preserved candidate as blocked if an approved criterion remains unresolved. Only explicit user direction may extend the run.
 
-1. **Brainstorm.** Invoke `$implement:brainstorm` in the integration worktree. Use exactly two independent Terra/medium workers and keep the Build orchestrator as the Sol/xhigh planner. Store `docs/build/<run-id>-plan.md` and `<status-dir>/handoffs/plan.json`; record both. Present the plan and stop for explicit approval.
+1. **Brainstorm.** Invoke `$implement:brainstorm` in the integration worktree. When existing behavior is in scope, require its named regression-readiness and behavioral-baseline routing. Use exactly two independent Terra/medium workers and keep the Build orchestrator as the Sol/xhigh planner. Store `docs/build/<run-id>-plan.md` and `<status-dir>/handoffs/plan.json`; record both. Present the plan and stop for explicit approval.
 2. **Approval.** Record the approved plan and scope hashes with `build-handoff.mjs approve`. Any material scope or plan change invalidates approval and returns to Brainstorm. Check approval before seeding, integration, and merge-readiness reporting.
-3. **Seed tests.** Translate each observable criterion into the smallest failing automated test; retain manual/legal/visual/external criteria as explicit checks. Do not modify product code or weaken tests. Commit the plan and tests, record exact failures in `seed.json`, and hand off its path.
-4. **Blue Team.** Invoke `$implement:blue-team` from the seeded commit. It owns isolated specialist worktrees and returns `blue.json`, its candidate branch/commit, and validation artifacts. Do not let Blue workers edit the Build integration worktree.
-5. **One scoped Red Team pass.** Invoke `$implement:red-team` once against the immutable Blue candidate. Give it the approved plan, scope, criterion IDs, and changed paths. A finding is `eligible` only when it demonstrably prevents an approved criterion or regresses behavior within the approved change scope; it must cite those criterion IDs. Record unrelated, uncommon, speculative, hardening, portability, or pre-existing issues as `deferred` with a reason. Deferred findings stay visible in the report but do not enter Fixer or block readiness. `needs-context` is reserved for an in-scope decision that prevents determining criterion success.
-6. **At most one scoped Fixer/Judge pass.** If Red has eligible findings, invoke `$implement:fixer-team` once for the complete eligible set. Its Planner, Builder, Adversary, and Judge operate as one batch. The Judge is the post-fix assurance gate and may assess only the approved criteria, repaired finding IDs, repair diff, and relevant regression suite. New outside-scope observations are deferred; do not launch another Red or Fixer round. If the single pass leaves an approved criterion unresolved, preserve the best candidate, block readiness, and recommend explicit standalone `$implement:fixer-team` or `$implement:red-team` work. When Red has no eligible findings, record `fixer-1.json` as `not-required` without launching Fixer.
-7. **Integrate.** Merge the Blue commit when Fixer is not required, otherwise the Fixer commit accepted by its scoped Judge. Resolve mechanical conflicts only; ask about semantic conflicts. Run the complete relevant suite and record the final SHA. Do not perform a second Red pass inside Build.
+3. **Seed tests.** Use `$implement:bug-validation-and-regression` to translate each observable criterion into the smallest failing automated test; retain manual/legal/visual/external criteria as explicit checks. Do not modify product code or weaken tests. Commit the plan and tests, record exact failures in `seed.json`, and hand off its path.
+4. **Blue Team.** Invoke `$implement:blue-team` from the seeded commit. It owns isolated specialist worktrees, explicitly uses `$implement:bug-validation-and-regression` and `$implement:run` where applicable, and returns `blue.json`, its candidate branch/commit, and validation artifacts. Do not let Blue workers edit the Build integration worktree.
+5. **One scoped Red Team pass.** Invoke `$implement:red-team` once against the immutable Blue candidate. It explicitly uses `$implement:bug-finding-review`. Give it the approved plan, scope, criterion IDs, and changed paths. A finding is `eligible` only when it demonstrably prevents an approved criterion or regresses behavior within the approved change scope; it must cite those criterion IDs. Record unrelated, uncommon, speculative, hardening, portability, or pre-existing issues as `deferred` with a reason. Deferred findings stay visible in the report but do not enter Fixer or block readiness. `needs-context` is reserved for an in-scope decision that prevents determining criterion success.
+6. **At most one scoped Fixer/Judge pass.** If Red has eligible findings, invoke `$implement:fixer-team` once for the complete eligible set. It explicitly uses its named evidence/hypothesis diagnostic chain and `$implement:bug-validation-and-regression` when the evidence needs it. Its Planner, Builder, Adversary, and Judge operate as one batch. The Judge is the post-fix assurance gate and may assess only the approved criteria, repaired finding IDs, repair diff, and relevant regression suite. New outside-scope observations are deferred; do not launch another Red or Fixer round. If the single pass leaves an approved criterion unresolved, preserve the best candidate, block readiness, and recommend explicit standalone `$implement:fixer-team` or `$implement:red-team` work. When Red has no eligible findings, record `fixer-1.json` as `not-required` without launching Fixer.
+7. **Integrate.** Merge the Blue commit when Fixer is not required, otherwise the Fixer commit accepted by its scoped Judge. Resolve mechanical conflicts only; ask about semantic conflicts. Invoke `$implement:verify` for the complete applicable proof, run the complete relevant suite, and record the final SHA. Do not perform a second Red pass inside Build.
 
 Progress follows recorded stage milestones, never finding volume. Entity status commands already emit lifecycle events; add generic events only for approvals, validation, merges, and telemetry gaps.
 
