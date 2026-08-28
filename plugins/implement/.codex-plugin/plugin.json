@@ -1,6 +1,6 @@
 {
   "name": "implement",
-  "version": "1.0.1+codex.20260826070235",
+  "version": "1.0.1+codex.20260828045749",
   "description": "Approval-gated, test-first implementation delivery with planning, adversarial review, repair, dashboard telemetry, and lifecycle hooks.",
   "author": {
     "name": "Jeff"
