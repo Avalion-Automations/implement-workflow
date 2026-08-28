@@ -20,6 +20,17 @@ Use two workers for a bounded request and three for cross-cutting or high-risk w
 
 When invoked by `$implement:build`, first read [references/orchestration-contract.md](references/orchestration-contract.md). Use its manifest paths, budget warnings, fresh-context receipt, model fallback, and status rules. Otherwise do not create Build telemetry or artifacts.
 
+## Behavior-preservation support
+
+When the request changes an existing product surface, invoke
+[$implement:audit-regression-readiness](../audit-regression-readiness/SKILL.md)
+to identify observable behavior that lacks adequate protection. When a
+behavioral contract must be captured before change, invoke
+[$implement:capture-behavioral-baseline](../capture-behavioral-baseline/SKILL.md)
+and carry its explicit invariants into the plan. These skills are conditional:
+do not manufacture a baseline or regression audit for wholly new, isolated
+work with no existing behavior to preserve.
+
 ## Workflow
 
 1. **Frame.** Extract outcome, users, constraints, deliverables, evidence, and unknowns. Inspect only in-scope sources; do not browse, install, test, branch, or mutate merely to brainstorm.

@@ -19,7 +19,16 @@ Create `blue-team/<run-id>-integration` and one branch/worktree per independent 
 
 ## Implement and integrate
 
-Each specialist must inspect local code, implement a complete scoped change, preserve public contracts, avoid placeholders/test suppression, run scoped checks, commit, and write a compact receipt. The orchestrator reviews and merges accepted commits one at a time. Resolve mechanical conflicts only; escalate semantic conflicts.
+Each specialist must use
+[$implement:bug-validation-and-regression](../bug-validation-and-regression/SKILL.md)
+to select the smallest faithful regression proof for its assigned criteria.
+Each specialist must inspect local code, implement a complete scoped change,
+preserve public contracts, avoid placeholders/test suppression, run scoped
+checks, commit, and write a compact receipt. When acceptance depends on a
+user-observable runtime flow, invoke [$implement:run](../run/SKILL.md) to
+observe that flow and record the result; do not claim runtime observation when
+it was not possible. The orchestrator reviews and merges accepted commits one
+at a time. Resolve mechanical conflicts only; escalate semantic conflicts.
 
 Run the full relevant repository suite from the Blue integration worktree. Separate baseline, candidate-caused, external, and unresolved failures. Call the result green only when task-relevant checks pass. Never force-push, reset, overwrite user work, or merge to the user's base branch.
 

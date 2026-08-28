@@ -17,6 +17,20 @@ Accept only a validated Red manifest/report with a reviewed commit and, per repa
 
 Confirm repository/commit identity, applicable `AGENTS.md`, clean source state, baseline commands, and cited files. Create `fixer-team/<run-id>-integration` from the reviewed commit. Planner, Builder, and Judge use this controlled worktree sequentially; Adversary receives a read-only snapshot. Record baseline failures separately. Never force-push, reset, or overwrite user work.
 
+## Named diagnostic and validation chain
+
+When the cited report does not already isolate a reproducible mechanism,
+invoke these individual skills in order: [$implement:debugging-evidence-capture](../debugging-evidence-capture/SKILL.md),
+[$implement:hypothesis-formulation](../hypothesis-formulation/SKILL.md),
+[$implement:hypothesis-instrumentation](../hypothesis-instrumentation/SKILL.md),
+and [$implement:hypothesis-evaluation](../hypothesis-evaluation/SKILL.md).
+Use only minimally scoped probes permitted by the repository rules, preserve
+their evidence in the receipt, and remove temporary diagnostics before final
+delivery. Do not add instrumentation when a minimal failing regression already
+isolates the defect. For every repair, invoke
+[$implement:bug-validation-and-regression](../bug-validation-and-regression/SKILL.md)
+to create the faithful regression and prove the repaired behavior.
+
 ## Standalone bug-list decision gate
 
 Apply this gate only when a manually supplied report declares both `reportSource: bug-list-generator` and `workflowMode: standalone`. Run it after validating the report identity and cited evidence, but before creating a branch/worktree, running tests, writing artifacts, or delegating any repair role. Never apply it in Build mode: Build's approved plan, scope, criteria, and Red manifest are already the decision authority.
