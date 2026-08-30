@@ -1,0 +1,4 @@
+interface:
+  display_name: "Worktree Cleanup"
+  short_description: "Safely inventory and clean Git worktrees"
+  default_prompt: "Use $work-cleanup --report to evaluate the current Git worktree and branch status without changing anything."

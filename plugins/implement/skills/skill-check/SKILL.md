@@ -1,0 +1,28 @@
+---
+name: skill-check
+description: Validate a Codex skill's structure, resource integrity, and design quality. Use when reviewing, linting, improving, or preparing a skill for use, especially for workflow clarity, progressive disclosure, deterministic scripts, and stale or broken resources.
+---
+
+# Skill Check
+
+Run both checks against the requested skill directory:
+
+```bash
+python3 /home/raptorx/.codex/skills/.system/skill-creator/scripts/quick_validate.py <skill-dir>
+python3 /home/raptorx/.codex/skills/skill-check/scripts/check_skill.py <skill-dir>
+```
+
+Use `--strict` on the second command when warnings must also fail validation.
+
+## Review
+
+Separate hard errors from design warnings. Then inspect the skill and report whether:
+
+1. The name and description are concise and state clear triggering situations.
+2. The body provides a clear task workflow or task-oriented structure.
+3. Conditional or variant-specific detail is kept concise and routed to `references/` when substantial.
+4. Repeatable, deterministic operations live in `scripts/` rather than long inline code blocks.
+5. Every bundled resource is necessary, referenced, and complete.
+6. The instructions are actionable, internally consistent, and avoid stale placeholders.
+
+Do not edit the reviewed skill unless the user requests fixes. Return a compact table of errors, warnings, design assessment, and recommended next actions.

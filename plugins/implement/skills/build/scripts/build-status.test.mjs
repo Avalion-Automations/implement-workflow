@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { EventEmitter } from "node:events";
-import { appendFileSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { appendFileSync, closeSync, mkdtempSync, openSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -404,7 +404,16 @@ test("lifecycle hooks update only the selected Build task and never infer approv
   const statusDir = join(runsRoot, "hook-run", "status");
   const script = fileURLToPath(new URL("./build-status.mjs", import.meta.url));
   const run = (...args) => spawnSync(process.execPath, [script, ...args], { encoding: "utf8" });
-  const hook = (input) => spawnSync(process.execPath, [script, "hook", "--runs-dir", runsRoot], { input: JSON.stringify(input), encoding: "utf8" });
+  const hook = (input) => {
+    const eventPath = join(runsRoot, "hook-event.json");
+    writeFileSync(eventPath, JSON.stringify(input));
+    const inputDescriptor = openSync(eventPath, "r");
+    try {
+      return spawnSync(process.execPath, [script, "hook", "--runs-dir", runsRoot], { encoding: "utf8", stdio: [inputDescriptor, "pipe", "pipe"] });
+    } finally {
+      closeSync(inputDescriptor);
+    }
+  };
   const baseEvent = { session_id: "session-1", cwd: workspace, model: "gpt-5.6-sol", permission_mode: "default", turn_id: "turn-1" };
 
   try {

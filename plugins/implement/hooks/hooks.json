@@ -1,5 +1,5 @@
 {
-  "description": "Implement workflow lifecycle telemetry. These hooks update only an explicitly selected Implement run/task context and never approve plans or merges.",
+  "description": "Implement workflow lifecycle telemetry template. Install with scripts/install-plugin.mjs so its PLUGIN_ROOT placeholders become installed absolute paths; hooks update only an explicitly selected Implement run/task context and never approve plans or merges.",
   "hooks": {
     "SubagentStart": [{
       "hooks": [{

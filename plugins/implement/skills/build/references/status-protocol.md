@@ -41,7 +41,19 @@ Use stable IDs: `brainstorm`, `seed-tests`, `blue`, `red-<round>`, `fixer-<round
 
 ## Bundled lifecycle hooks
 
-`hooks/hooks.json` is the canonical plugin hook source. A standalone copied skill folder is not a hook discovery layer. When packaging, place this file at the plugin root and the skill at `skills/build/`, matching its `PLUGIN_ROOT` commands. Alternatively, copy the hook definition to a discovered user/repository `hooks.json` and replace each command with the absolute skill script path. Review and trust changed hooks with `/hooks`.
+`hooks/hooks.json` is the portable source template; a standalone copied skill
+folder is not a hook discovery layer. The installed artifact is distinct from
+the source and must not retain its `PLUGIN_ROOT` placeholders, because hook
+runners do not provide that environment variable. After a cachebuster update,
+install with `node plugins/implement/scripts/install-plugin.mjs install`. It
+runs Codex's normal plugin update, discovers the selected installed path from
+Codex's JSON result, checks that installed manifest matches the source version,
+then materializes every root hook command to the selected destination's
+absolute `skills/build/scripts/build-status.mjs` path. Use `inspect` to report
+a stale installation before changing it. The operation is idempotent and must
+be repeated after every plugin update. Review and trust the resulting changed
+hooks with `/hooks`; do not activate both placeholder and materialized hook
+files, or the lifecycle event would be handled twice.
 
 The `context` command is the active-run/task pointer. It binds an existing task (and optional registered agent) to the run workspace; the first matching event also binds the parent Codex session ID so subagent events remain attached when their cwd changes. Change the pointer at each task boundary and use `context --state-dir <state-dir> --clear` when no task should receive lifecycle updates.
 
