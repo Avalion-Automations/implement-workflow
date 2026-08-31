@@ -1,47 +1,49 @@
-# Implement Codex Plugin
+# Agent Workflows
 
-Portable source repository for the `implement` Codex plugin.
+`agent-workflows` is the portable source repository for foundational coding
+agent skills and workflows. `.agents/skills/` is canonical. Hosts package or
+sync that source into their native skill discovery layout.
 
-## Repository layout
+## Layout
 
-- `plugins/implement/` — the complete plugin: manifest, skills, hooks, scripts, and dashboard assets.
-- `.agents/plugins/marketplace.json` — the local marketplace entry that exposes the plugin.
+- `.agents/skills/` — shared skills, scripts, references, and assets.
+- `.agents/adapter-contract.md` — required and optional host capabilities.
+- `platforms/codex/` — Codex-only manifest, metadata, hooks, and installer.
+- `plugins/basics/` — the install-ready Codex package generated from the core.
 
-## Install from this repository
+## Codex: Basics
 
-From a machine containing a clone of this repository, register the marketplace root and install the plugin:
-
-```bash
-codex plugin marketplace add /absolute/path/to/implement-plugin-repo
-codex plugin add implement@personal
-```
-
-Start a new Codex thread after installing so it picks up the plugin's skills and hooks.
-
-## Updating after edits
-
-Run the Codex cachebuster helper, then use the bundled installer. The installer
-first runs Codex's normal plugin update and then materializes the installed
-root-hook commands with the actual absolute plugin path. This is required
-because hook runners do not provide a `PLUGIN_ROOT` environment variable:
+`basics` is the Codex adapter and exposes commands such as `$basics:build`.
+For a first package build, run:
 
 ```bash
-python3 /home/raptorx/.codex/skills/.system/plugin-creator/scripts/update_plugin_cachebuster.py plugins/implement
-node plugins/implement/scripts/install-plugin.mjs install \
-  --marketplace personal
+node scripts/sync-codex-basics.mjs
 ```
 
-Use `inspect` before a repair to report source and installed versions without
-changing either artifact:
+After changing canonical skills, verify the package with:
 
 ```bash
-codex plugin add implement@personal --json
+node scripts/sync-codex-basics.mjs --check
 ```
 
-The installer reads the authoritative installed path from Codex's JSON result,
-then refuses to materialize hooks when that selected package is stale. After a
-successful install, use Codex's `/hooks` flow to review and trust the changed
-hook commands, then start a new thread so it reads the updated plugin. For
-portability, replace the cachebuster-helper path above with the matching path
-on the target machine, or use an equivalent installed Codex plugin-creator
-helper.
+The generator refuses to overwrite `plugins/basics/`; explicitly archive or
+remove that exact generated directory before rebuilding it.
+
+Install from a clone after the package exists:
+
+```bash
+codex plugin marketplace add /absolute/path/to/agent-workflows
+codex plugin add basics@personal
+```
+
+Run the package tests before reinstalling, then start a new thread so Codex
+discovers the updated skills. Lifecycle telemetry is optional; set
+`BASICS_RUNS_DIR` when its status records should not use Codex's default state
+directory.
+
+## Other agents
+
+Use `.agents/adapter-contract.md` and `platforms/reference/README.md` to build
+an adapter for Claude or a custom coding agent. Do not copy Codex hook events,
+OpenAI metadata, or the dashboard unless the target host provides equivalent
+features.

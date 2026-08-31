@@ -1,0 +1,52 @@
+{
+  "description": "Basics lifecycle telemetry template. Install with scripts/install-plugin.mjs so its PLUGIN_ROOT placeholders become installed absolute paths; hooks update only an explicitly selected Basics run/task context and never approve plans or merges.",
+  "hooks": {
+    "SubagentStart": [{
+      "hooks": [{
+        "type": "command",
+        "command": "node \"$PLUGIN_ROOT/skills/build/scripts/build-status.mjs\" hook",
+        "commandWindows": "node \"%PLUGIN_ROOT%\\skills\\build\\scripts\\build-status.mjs\" hook",
+        "timeout": 10,
+        "statusMessage": "Updating Basics agent status"
+      }]
+    }],
+    "SubagentStop": [{
+      "hooks": [{
+        "type": "command",
+        "command": "node \"$PLUGIN_ROOT/skills/build/scripts/build-status.mjs\" hook",
+        "commandWindows": "node \"%PLUGIN_ROOT%\\skills\\build\\scripts\\build-status.mjs\" hook",
+        "timeout": 10,
+        "statusMessage": "Closing Basics agent status"
+      }]
+    }],
+    "PreToolUse": [{
+      "matcher": "^(Bash|apply_patch)$",
+      "hooks": [{
+        "type": "command",
+        "command": "node \"$PLUGIN_ROOT/skills/build/scripts/build-status.mjs\" hook",
+        "commandWindows": "node \"%PLUGIN_ROOT%\\skills\\build\\scripts\\build-status.mjs\" hook",
+        "timeout": 10,
+        "statusMessage": "Marking Basics task active"
+      }]
+    }],
+    "PostToolUse": [{
+      "matcher": "^(Bash|apply_patch)$",
+      "hooks": [{
+        "type": "command",
+        "command": "node \"$PLUGIN_ROOT/skills/build/scripts/build-status.mjs\" hook",
+        "commandWindows": "node \"%PLUGIN_ROOT%\\skills\\build\\scripts\\build-status.mjs\" hook",
+        "timeout": 10,
+        "statusMessage": "Recording Basics tool outcome"
+      }]
+    }],
+    "Stop": [{
+      "hooks": [{
+        "type": "command",
+        "command": "node \"$PLUGIN_ROOT/skills/build/scripts/build-status.mjs\" hook",
+        "commandWindows": "node \"%PLUGIN_ROOT%\\skills\\build\\scripts\\build-status.mjs\" hook",
+        "timeout": 10,
+        "statusMessage": "Reconciling Basics task status"
+      }]
+    }]
+  }
+}

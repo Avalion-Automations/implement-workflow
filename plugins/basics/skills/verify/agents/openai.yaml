@@ -1,0 +1,5 @@
+interface:
+  display_name: "Verify"
+  short_description: "Prove changes in runtime."
+  default_prompt: "Use $verify to build, launch, and observe whether this code change works end to end."
+

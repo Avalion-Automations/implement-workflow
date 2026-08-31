@@ -1,0 +1,4 @@
+interface:
+  display_name: "Review and Promote Docs"
+  short_description: "Review drafts and promote approved documentation"
+  default_prompt: "Use $review-promote-docs to review every draft, resolve assumptions, and safely promote approved documentation."

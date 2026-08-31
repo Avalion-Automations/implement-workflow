@@ -1,0 +1,135 @@
+import assert from "node:assert/strict";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import test from "node:test";
+
+import { approve, checkApproval, checkBudget, checkTimeBudget, compactReceipt, initialize, recordManifest, renderReport, validateManifest } from "./build-handoff.mjs";
+
+function manifest(overrides = {}) {
+  return {
+    schemaVersion: 1,
+    kind: "plan",
+    runId: "run-one",
+    stage: "brainstorm",
+    status: "completed",
+    source: { repo: "fixture", base: "abc", commit: "def" },
+    objective: "Produce an approved plan",
+    decisions: [], criteria: [], inputs: [], outputs: [], checks: [], findings: [], blockers: [], artifacts: [], next: [],
+    ...overrides,
+  };
+}
+
+test("manifest validation enforces the common envelope", () => {
+  assert.deepEqual(validateManifest(manifest()), { ok: true, kind: "plan", runId: "run-one", stage: "brainstorm", status: "completed" });
+  assert.throws(() => validateManifest({ ...manifest(), blockers: undefined }), /blockers must be an array/);
+  assert.throws(() => validateManifest({ ...manifest(), status: "ready" }), /Invalid manifest status/);
+  assert.throws(() => validateManifest({ ...manifest(), stage: "red" }), /Invalid manifest stage/);
+  assert.throws(() => validateManifest({ ...manifest(), kind: "candidate" }), /cannot use stage brainstorm/);
+  assert.throws(() => validateManifest({ ...manifest(), kind: "seed", stage: "seed-tests", checks: [{ command: "node test.mjs", result: "expected-failure", exitCode: 0, commit: "def", evidence: "unexpected pass" }] }), /nonzero exitCode/);
+  assert.throws(() => validateManifest({ ...manifest(), kind: "candidate", stage: "blue", checks: [{ command: "node test.mjs", result: "passed", exitCode: 0, commit: "stale", evidence: "suite passed" }] }), /does not match source.commit/);
+  assert.throws(() => validateManifest({ ...manifest(), kind: "review", stage: "red-1", findings: [{ id: "RT-x-1", scopeDisposition: "in-scope", repairDisposition: "maybe" }] }), /repairDisposition/);
+  assert.throws(() => validateManifest({ ...manifest(), kind: "review", stage: "red-1", findings: [{ id: "RT-x-1", repairDisposition: "eligible", scopeDisposition: "out-of-scope", criterionIds: ["C1"] }] }), /must be in-scope/);
+  assert.throws(() => validateManifest({ ...manifest(), kind: "review", stage: "red-1", findings: [{ id: "RT-x-1", repairDisposition: "deferred", scopeDisposition: "out-of-scope" }] }), /deferReason/);
+  assert.throws(() => validateManifest({ ...manifest(), kind: "repair", stage: "fixer-1", findings: [{ id: "RT-x-1", result: "maybe" }] }), /result/);
+});
+
+test("compact receipts omit detailed evidence and cap artifact references", () => {
+  const value = manifest({
+    checks: [{ result: "passed", evidence: "large raw output" }, { result: "passed" }],
+    artifacts: Array.from({ length: 12 }, (_, index) => ({ path: `/tmp/artifact-${index}`, contents: "not copied" })),
+  });
+  const receipt = compactReceipt(value, "/tmp/plan.json", "2026-08-10T00:00:00.000Z");
+  assert.deepEqual(receipt.checks, { passed: 2 });
+  assert.equal(receipt.artifacts.length, 8);
+  assert.doesNotMatch(JSON.stringify(receipt), /large raw output|not copied/);
+});
+
+test("ledger enforces one scoped Red/Fixer round, approval, budgets, and readiness", () => {
+  const root = mkdtempSync(join(tmpdir(), "build-handoff-"));
+  const statusDir = join(root, "status");
+  const planPath = join(statusDir, "handoffs", "plan.json");
+  const scopePath = join(root, "scope.txt");
+  const reportPath = join(root, "report.md");
+  try {
+    initialize({ "status-dir": statusDir, run: "run-one", repo: "fixture", base: "abc", branch: "build/run-one" });
+    assert.throws(() => initialize({ "status-dir": statusDir, run: "run-one", repo: "other", base: "abc", branch: "build/run-one" }), /repo does not match/);
+    writeFileSync(planPath, `${JSON.stringify(manifest(), null, 2)}\n`);
+    writeFileSync(scopePath, "criterion-1\n");
+    const recordStage = (name, kind, status, extra = {}) => {
+      const path = join(statusDir, "handoffs", `${name}.json`);
+      writeFileSync(path, `${JSON.stringify(manifest({ kind, stage: name, status, ...extra }), null, 2)}\n`);
+      return recordManifest({ "status-dir": statusDir, file: path });
+    };
+    let result = recordManifest({ "status-dir": statusDir, file: planPath });
+    assert.equal(result.stage, "brainstorm");
+    approve({ "status-dir": statusDir, plan: planPath, scope: scopePath, event: "approval-1" });
+    assert.equal(checkApproval({ "status-dir": statusDir, plan: planPath, scope: scopePath }).approved, true);
+
+    recordStage("seed-tests", "seed", "completed", {
+      source: { repo: "fixture", base: "abc", commit: "seed" },
+      checks: [{ command: "node test.mjs", result: "expected-failure", exitCode: 1, commit: "seed", evidence: "assertion failed as seeded" }],
+    });
+    recordStage("blue", "candidate", "completed", {
+      source: { repo: "fixture", base: "abc", commit: "blue" },
+      checks: [{ command: "node test.mjs", result: "passed", exitCode: 0, commit: "blue", evidence: "suite passed" }],
+      inputs: [{ kind: "seed", commit: "seed" }],
+    });
+    recordStage("red-1", "review", "completed", { source: { repo: "fixture", base: "abc", commit: "blue" } });
+    recordStage("fixer-1", "repair", "not-required", { source: { repo: "fixture", base: "abc", commit: "blue" } });
+    recordStage("integration", "integration", "completed", {
+      source: { repo: "fixture", base: "abc", commit: "integrated" },
+      checks: [{ command: "node test.mjs", result: "passed", exitCode: 0, commit: "integrated", evidence: "suite passed" }],
+      inputs: [{ kind: "reviewed-candidate", commit: "blue" }],
+    });
+    result = renderReport({ "status-dir": statusDir, output: reportPath });
+    assert.equal(result.ready, true);
+    assert.match(readFileSync(reportPath, "utf8"), /Ready for explicit merge approval/);
+
+    const deferred = { id: "RT-edge-1", scopeDisposition: "out-of-scope", repairDisposition: "deferred", deferReason: "Not required by the approved plan" };
+    recordStage("red-1", "review", "completed", { source: { repo: "fixture", base: "abc", commit: "blue" }, findings: [deferred] });
+    assert.equal(renderReport({ "status-dir": statusDir, output: reportPath }).ready, true, "deferred findings remain report-only");
+    assert.match(readFileSync(reportPath, "utf8"), /1 report-only finding/);
+
+    const eligible = { id: "RT-logic-1", scopeDisposition: "in-scope", repairDisposition: "eligible", criterionIds: ["C1"] };
+    recordStage("red-1", "review", "completed", { source: { repo: "fixture", base: "abc", commit: "blue" }, findings: [eligible, deferred] });
+    assert.equal(renderReport({ "status-dir": statusDir, output: reportPath }).ready, false, "an in-scope eligible finding requires Fixer");
+    recordStage("fixer-1", "repair", "completed", {
+      source: { repo: "fixture", base: "abc", commit: "fixed" },
+      inputs: [{ kind: "review", commit: "blue" }],
+      findings: [{ id: "RT-logic-1", result: "fixed" }],
+      checks: [{ command: "node fixed.mjs", result: "passed", exitCode: 0, commit: "fixed", evidence: "scoped judge passed" }],
+    });
+    recordStage("integration", "integration", "completed", {
+      source: { repo: "fixture", base: "abc", commit: "integrated-fixed" },
+      checks: [{ command: "node test.mjs", result: "passed", exitCode: 0, commit: "integrated-fixed", evidence: "suite passed" }],
+      inputs: [{ kind: "reviewed-candidate", commit: "fixed" }],
+    });
+    assert.equal(renderReport({ "status-dir": statusDir, output: reportPath }).ready, true, "one scoped Fixer/Judge round can satisfy readiness");
+
+    recordStage("red-2", "review", "completed", { source: { repo: "fixture", base: "abc", commit: "fixed" } });
+    assert.equal(renderReport({ "status-dir": statusDir, output: reportPath }).ready, false, "repeated Red rounds are outside fast Build readiness");
+
+    writeFileSync(scopePath, "criterion-2\n");
+    assert.throws(() => checkApproval({ "status-dir": statusDir, plan: planPath, scope: scopePath }), /scope changed/);
+
+    const largeOutput = join(root, "output.log");
+    writeFileSync(largeOutput, `${"x".repeat(2200)}\n`);
+    result = checkBudget({ "status-dir": statusDir, kind: "output", file: largeOutput });
+    assert.equal(result.warning, true);
+
+    const ledgerBeforeTime = JSON.parse(readFileSync(join(statusDir, "handoffs", "run-ledger.json"), "utf8"));
+    const started = Date.parse(ledgerBeforeTime.createdAt);
+    assert.equal(checkTimeBudget({ "status-dir": statusDir }, started + 31 * 60000).state, "target-exceeded");
+    assert.equal(checkTimeBudget({ "status-dir": statusDir }, started + 46 * 60000).state, "hard-stop");
+
+    result = renderReport({ "status-dir": statusDir, output: reportPath });
+    assert.equal(result.ready, false);
+    assert.match(readFileSync(reportPath, "utf8"), /Not ready for merge approval/);
+    const ledger = JSON.parse(readFileSync(join(statusDir, "handoffs", "run-ledger.json"), "utf8"));
+    assert.equal(ledger.stages.brainstorm.manifest, planPath);
+    assert.equal(ledger.proxyWarnings.length, 1);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});

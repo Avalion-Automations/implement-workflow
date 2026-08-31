@@ -1,0 +1,4 @@
+interface:
+  display_name: "Capture Behavioral Baseline"
+  short_description: "Lock current behavior with regression tests"
+  default_prompt: "Use $capture-behavioral-baseline to audit the current app and lock its behavior with durable regression tests."

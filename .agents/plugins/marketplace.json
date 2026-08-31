@@ -5,10 +5,10 @@
   },
   "plugins": [
     {
-      "name": "implement",
+      "name": "basics",
       "source": {
         "source": "local",
-        "path": "./plugins/implement"
+        "path": "./plugins/basics"
       },
       "policy": {
         "installation": "AVAILABLE",

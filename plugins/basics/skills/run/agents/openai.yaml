@@ -1,0 +1,5 @@
+interface:
+  display_name: "Run"
+  short_description: "Launch and observe an app."
+  default_prompt: "Use $run to start this project and confirm the requested behavior in the running app."
+
