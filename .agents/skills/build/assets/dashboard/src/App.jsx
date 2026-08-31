@@ -151,7 +151,7 @@ export function App() {
       {error && <p className="alert" role="alert">Live status unavailable: {error}</p>}
 
       <section className="kpis" aria-label="Workflow summary">
-        <Metric label="Task completion" value={`${completion.complete}/${completion.total}`} detail={`${completion.percent}% milestone progress`} />
+        <Metric label="Workflow completion" value={`${completion.percent}%`} detail="weighted milestone progress" />
         <Metric label="Active agents" value={summary.activeAgents} detail={`${summary.queuedOrWaitingAgents} queued / waiting`} filter={FILTERS.activeAgents} activeFilters={activeFilters} onToggle={toggleFilter} />
         <Metric label="Open blockers" value={summary.openBlockers} detail="blocked or failed tasks" filter={FILTERS.openBlockers} activeFilters={activeFilters} onToggle={toggleFilter} />
         <Metric label="Open review findings" value={summary.openFindings} detail="unresolved findings" filter={FILTERS.openFindings} activeFilters={activeFilters} onToggle={toggleFilter} />

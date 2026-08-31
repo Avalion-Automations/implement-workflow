@@ -24,10 +24,14 @@ const data = {
   },
 };
 
-test("schema-v3 summary remains authoritative over UI collections", () => {
+test("schema-v3 summary and workflow completion remain authoritative over UI collections", () => {
   const summary = getSummary({ ...data, agents: {}, tasks: {} });
   assert.deepEqual(summary, data.summary);
-  assert.deepEqual(getCompletion(data), { total: 4, complete: 1, percent: 40 });
+  assert.deepEqual(getCompletion(data), { percent: 40 });
+  assert.deepEqual(getCompletion({ run: { progress: 25 }, tasks: {
+    completedButUnrelated: { status: "completed" },
+    activeButUnrelated: { status: "active" },
+  } }), { percent: 25 });
 });
 
 test("legacy summary fallback counts queued and waiting agents and unresolved findings", () => {
