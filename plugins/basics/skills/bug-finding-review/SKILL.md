@@ -1,6 +1,6 @@
 ---
 name: bug-finding-review
-description: Review code, designs, or bug reports to find likely defects before or during debugging. Use for static bug scans, logic review, assumption audits, counterexample hunting, reachability and blast-radius analysis, dependency semantics checks, skeptical review, AHK shadowing checks, or domain-specific bug probes.
+description: Review code, designs, or bug reports for likely defects, faulty assumptions, edge cases, and regression risks.
 ---
 
 # Bug Finding Review

@@ -1,6 +1,6 @@
 ---
 name: capture-behavioral-baseline
-description: Audit a project's current observable behavior and encode stable expectations as durable regression contract tests. Use when a user asks to snapshot, freeze, preserve, or lock current behavior before a redesign, refactor, handoff, migration, or new development stage; asks for tests covering the current behavior and status; or wants protection against another agent silently breaking working flows.
+description: Capture current user-visible behavior as durable regression contract tests before a redesign, refactor, migration, or handoff.
 ---
 
 # Capture Behavioral Baseline

@@ -1,6 +1,6 @@
 ---
 name: blue-team
-description: Orchestrate test-first implementation through isolated domain-specialist subagents. Use only when the user invokes `$basics:blue-team` or asks for Blue Team orchestration with parallel implementation, isolated worktrees, and an integration report.
+description: Orchestrate parallel, test-first implementation by isolated specialist subagents. Use only for explicit Blue Team requests.
 ---
 
 # Blue Team

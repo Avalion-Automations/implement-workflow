@@ -1,6 +1,6 @@
 ---
 name: brainstorm
-description: "Turn an ambiguous product, design, or engineering request into an assumption-checked handoff plan. Use when a user needs hidden assumptions surfaced, only consequential decisions escalated, and a detailed plan before implementation."
+description: Turn an ambiguous product, design, or engineering request into an assumption-checked implementation plan.
 ---
 
 # Brainstorm

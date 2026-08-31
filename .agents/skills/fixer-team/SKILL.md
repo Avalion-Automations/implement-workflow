@@ -1,6 +1,6 @@
 ---
 name: fixer-team
-description: "Repair an evidence-backed Red Team bug list with a four-agent, test-first planner, builder, adversary, and judge loop. Use when a user wants verified fixes for concrete findings, not vague feature requests or unstructured bug reports."
+description: Repair an evidence-backed Red Team bug list through a test-first planner, builder, adversary, and judge loop.
 ---
 
 # Fixer Team

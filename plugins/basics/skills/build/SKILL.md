@@ -1,6 +1,6 @@
 ---
 name: build
-description: "Run a fast, approval-gated feature workflow with planning, test-first Blue implementation, one scope-bound Red review, one Fixer/Judge pass, controlled integration, a dashboard, and merge-readiness reporting. Use for practical 0-to-90% delivery that must await explicit merge approval."
+description: Run an approval-gated feature workflow with test-first implementation, review, fixes, integration, and merge-readiness reporting.
 ---
 
 # Build

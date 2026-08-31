@@ -1,6 +1,6 @@
 ---
 name: hypothesis-formulation
-description: Turn symptoms, raw suspicions, weak hypothesis bullets, or vague failures into a reviewed list of falsifiable debugging hypotheses that can be passed directly to hypothesis-instrumentation. Use for triage, root-cause analysis, hypothesis normalization, and debugging across languages.
+description: Turn symptoms or vague failures into reviewed, falsifiable debugging hypotheses for targeted investigation.
 ---
 
 # Hypothesis Formulation

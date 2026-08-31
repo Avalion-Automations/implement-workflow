@@ -1,6 +1,6 @@
 ---
 name: red-team
-description: Run an adversarial, read-only software review through domain-specialist subagents and a final finding validator. Use only when the user explicitly invokes `$basics:red-team` or requests adversarial review, defect hunting, or independent validation of an implementation or handoff.
+description: Run an adversarial, read-only software review with validated findings. Use only for explicit Red Team or adversarial-review requests.
 ---
 
 # Red Team

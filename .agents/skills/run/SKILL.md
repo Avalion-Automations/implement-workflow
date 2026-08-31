@@ -1,6 +1,6 @@
 ---
 name: run
-description: 'Launch and drive a project, service, CLI, TUI, or browser app to observe behavior directly. Use when the user wants the app running, wants visual or runtime confirmation, or asks to see a change working beyond tests.'
+description: Launch and drive an app, service, CLI, TUI, or browser flow to observe behavior directly.
 ---
 
 # Run

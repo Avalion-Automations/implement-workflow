@@ -1,6 +1,6 @@
 ---
 name: debugging-evidence-capture
-description: Capture actionable debugging evidence and recovery state. Use for minimal reproductions, observability probes, file-backed debug probes, error-recovery loops, failure logs, and deciding the next narrow diagnostic step after a tool, shell, validation, or runtime failure.
+description: Capture minimal reproductions, probes, failure evidence, and recovery state to guide the next debugging step.
 ---
 
 # Debugging Evidence Capture

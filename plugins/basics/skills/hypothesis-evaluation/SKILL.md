@@ -1,6 +1,6 @@
 ---
 name: hypothesis-evaluation
-description: Convert structured probe output from hypothesis-instrumentation into an updated hypothesis report. Use for classifying evidence, confirming or rejecting hypotheses, choosing the next debugging check, and deciding when to loop through logic review across languages.
+description: Evaluate debugging probe results to confirm or reject hypotheses and choose the next diagnostic check.
 ---
 
 # Hypothesis Evaluation

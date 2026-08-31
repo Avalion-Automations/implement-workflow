@@ -1,6 +1,6 @@
 ---
 name: hypothesis-instrumentation
-description: Turn a normalized list of debugging hypotheses into minimal instrumentation code, a structured probe log format, validation steps, and a status report. Use for debugging, probe design, tracing, experiment planning, and root-cause analysis across languages.
+description: Turn debugging hypotheses into minimal instrumentation, structured probes, validation steps, and a status report.
 ---
 
 # Hypothesis Instrumentation

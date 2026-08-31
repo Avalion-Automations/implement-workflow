@@ -1,6 +1,6 @@
 ---
 name: feat-commit-no-scope
-description: Create concise scope-free Conventional Commit subjects using the type that accurately describes the change. Use for commits that must avoid parenthesized scopes, especially when distinguishing features, fixes, refactors, merges, releases, tests, documentation, and maintenance.
+description: Create concise Conventional Commit subjects without parenthesized scopes, using the correct change type.
 ---
 
 # Commit No Scope
@@ -56,4 +56,3 @@ Reject inaccurate feat classification as well as malformed subjects:
 - `chore: update project files`
 - `feat(pdf): add paged preview`
 - `feat!: replace validation contract`
-

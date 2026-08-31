@@ -1,6 +1,6 @@
 ---
 name: verify
-description: 'Verify a code change by building, launching, and observing the actual behavior or user flow. Use when tests are insufficient, a bug fix needs runtime proof, UI behavior must be confirmed, or the user asks to verify a change end to end.'
+description: Verify a code change by building, launching, and observing the real behavior or user flow end to end.
 ---
 
 # Verify

@@ -1,6 +1,6 @@
 ---
 name: bug-validation-and-regression
-description: Design and run focused checks that prove a bug, fix, or regression risk. Use for discovering build or test commands, runtime validation, differential checks, determinism checks, mutation sanity, stress edge probing, and planning or generating regression gates.
+description: Design and run focused checks that validate bugs, fixes, and regression risks with reproducible evidence.
 ---
 
 # Bug Validation And Regression

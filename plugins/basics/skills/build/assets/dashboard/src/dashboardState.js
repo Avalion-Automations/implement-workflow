@@ -29,8 +29,14 @@ export function getSummary(data) {
 }
 
 export function getCompletion(data) {
+  const tasks = Object.values(data?.tasks || {});
+  const complete = tasks.filter(({ status }) => TERMINAL.has(status)).length;
+  const total = tasks.length;
   return {
-    percent: nonNegative(data?.run?.progress),
+    total,
+    complete,
+    taskPercent: total === 0 ? 0 : Math.round((complete / total) * 100),
+    milestonePercent: nonNegative(data?.run?.progress),
   };
 }
 

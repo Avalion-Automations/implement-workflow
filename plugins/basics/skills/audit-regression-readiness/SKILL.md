@@ -1,6 +1,6 @@
 ---
 name: audit-regression-readiness
-description: Audit whether a project's current user-observable behavior is actually protected by regression tests and enforced verification before refactors, redesigns, migrations, AI-generated changes, or handoffs. Use when the user asks whether current behavior is preserved, whether regression coverage is sufficient, whether an AI can safely change the project, or wants a read-only test audit, coverage-gap matrix, risk assessment, or prioritized hardening plan.
+description: Audit whether user-visible behavior has adequate regression tests and verification before refactors, migrations, or handoffs.
 ---
 
 # Audit Regression Readiness
