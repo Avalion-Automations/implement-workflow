@@ -32,6 +32,13 @@ codex plugin list
 
 Treat an unmaterialized, stale, missing, or mismatched hook destination as a failed plugin update. Repair it before committing the completion claim, and tell the user to start a new Codex thread after successful installation.
 
+## Skill validation targets
+
+- Run quick validation and the bundled non-strict checker against canonical `.agents/skills/<skill>` sources.
+- Run the bundled checker with `--strict` against generated `plugins/basics/skills/<skill>` directories, where Codex `agents/openai.yaml` metadata has been injected.
+- Invoke `.agents/skills/skill-check/scripts/check_skill.py` or `plugins/basics/skills/skill-check/scripts/check_skill.py`; never invoke a different global checker copy.
+- Run `python3 .agents/skills/skill-check/scripts/check_skill.test.py` whenever checker behavior changes.
+
 ## Release checks
 
-Before commit and push, run the workflow tests, suite lint, dashboard tests/build, plugin validation, strict skill checks, generated-package drift check, and `git diff --check`. Commit only the intended plugin update files.
+Before commit and push, run the workflow tests, suite lint, checker regression tests, dashboard tests/build, plugin validation, canonical skill checks, packaged strict skill checks, generated-package drift check, and `git diff --check`. Commit only the intended plugin update files.
