@@ -43,6 +43,8 @@ git branch --all --verbose --no-abbrev
 python3 <skill-dir>/scripts/worktree_inventory.py
 ```
 
+The inventory also reads optional Markdown discovery hints from `<user-home>/.codex/notes/work-cleanup/*.md`; pass `--notes-dir <path>` only for an explicitly selected equivalent registry. A note path is never deletion authority. Report it as `note hint / needs investigation` until its existence, owning repository, Git registration, dirtiness, locks, merge evidence, and task/handoff activity are verified. Never migrate or delete a hinted path automatically.
+
 If the repository has a documented base branch, use it. Otherwise ask the user which protected integration branch should define “merged”; do not assume that `main`, `master`, or `devel` is disposable.
 
 The exact local branch names `devel`, `main`, and `master` are permanently

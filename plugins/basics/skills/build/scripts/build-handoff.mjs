@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, renameSync, statSync, writeFileSync } from "node:fs";
 import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { requireRecordedWorktree, resolveBuildWorktree } from "./worktree-root.mjs";
 
 const KINDS = new Set(["plan", "seed", "candidate", "review", "repair", "integration"]);
 const STATUSES = new Set(["queued", "active", "waiting", "completed", "blocked", "failed", "needs-context", "not-reproducible", "not-required"]);
@@ -92,12 +93,14 @@ function initialize(options) {
     base: required(options, "base"),
     branch: required(options, "branch"),
   };
+  const worktree = resolveBuildWorktree({ runId: required(options, "run"), environment: options.environment || process.env });
   if (existsSync(paths.ledger)) {
     const ledger = readLedger(paths.ledger);
     if (ledger.runId !== required(options, "run")) throw new Error(`Run ledger already belongs to ${ledger.runId}`);
     for (const field of ["repo", "base", "branch"]) {
       if (ledger.source[field] !== source[field]) throw new Error(`Run ledger ${field} does not match: ${ledger.source[field]}`);
     }
+    requireRecordedWorktree(ledger, worktree.root);
     return { ledger: paths.ledger, reused: true };
   }
   const now = timestamp();
@@ -105,6 +108,7 @@ function initialize(options) {
     schemaVersion: 1,
     runId: required(options, "run"),
     source,
+    worktree,
     createdAt: now,
     updatedAt: now,
     approval: null,

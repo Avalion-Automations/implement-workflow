@@ -1,5 +1,7 @@
 # Handoff: repair Implement-plugin hook installation
 
+**Status:** Integrated into the Basics Codex installer and mandatory repository release procedure. All five hook commands are materialized and installation-tested. Retained as historical diagnosis.
+
 ## Objective
 
 Make the installed `implement` plugin's `PreToolUse` and `PostToolUse` hooks

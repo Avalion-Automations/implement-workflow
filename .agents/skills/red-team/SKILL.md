@@ -11,7 +11,7 @@ When invoked by `$basics:build`, read [references/orchestration-contract.md](ref
 
 ## Immutable review
 
-Resolve the requested commit, record source `git status --short` and `git diff --quiet`, then create an immutable snapshot with `scripts/create_readonly_snapshot.sh <repo> <commit>`. Use only read commands (`git show/log/diff`, `rg`, `find`, `sed`, `head`, `tail`, and file reads). Recheck source state afterward; if it changed, disclose the integrity failure and do not claim verified read-only review. Ask for a commit or explicit diff when an immutable commit cannot represent requested changes.
+Resolve the requested commit, record source `git status --short` and `git diff --quiet`, then create an immutable snapshot with `scripts/create_readonly_snapshot.sh <repo> <commit> [snapshot-path]`. Under Build, require `snapshot-path` below the run-ledger-recorded worktree root; never fall back to a child-selected temporary root. Use only read commands (`git show/log/diff`, `rg`, `find`, `sed`, `head`, `tail`, and file reads). Recheck source state afterward; if it changed, disclose the integrity failure and do not claim verified read-only review. Ask for a commit or explicit diff when an immutable commit cannot represent requested changes.
 
 ## Team and evidence
 

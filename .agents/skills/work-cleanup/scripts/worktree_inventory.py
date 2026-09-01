@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import re
 import subprocess
 import sys
 from dataclasses import dataclass
@@ -11,6 +12,8 @@ from pathlib import Path
 
 
 PROTECTED_BRANCHES = frozenset({"devel", "main", "master"})
+DEFAULT_NOTES_DIR = Path.home() / ".codex" / "notes" / "work-cleanup"
+ABSOLUTE_PATH = re.compile(r"`(/[^`\r\n]+)`|(?<![A-Za-z0-9_.-])(/[^\s`|)]+)")
 
 
 def git(*args: str) -> tuple[int, str]:
@@ -28,6 +31,43 @@ class Worktree:
     detached: bool = False
     locked: bool = False
     prunable: bool = False
+
+
+@dataclass(frozen=True)
+class NoteHint:
+    path: str
+    note: str
+    owner: str
+    exists: bool
+
+
+def repository_owner(path: Path) -> str:
+    probe = path if path.is_dir() else path.parent
+    while not probe.exists() and probe != probe.parent:
+        probe = probe.parent
+    result = subprocess.run(
+        ["git", "-C", str(probe), "rev-parse", "--show-toplevel"],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    return result.stdout.strip() if result.returncode == 0 else "unknown"
+
+
+def discover_note_hints(notes_dir: Path, registered: set[str], owner_resolver=repository_owner) -> list[NoteHint]:
+    if not notes_dir.is_dir():
+        return []
+    hints: dict[str, NoteHint] = {}
+    for note in sorted(notes_dir.glob("*.md")):
+        for match in ABSOLUTE_PATH.finditer(note.read_text(encoding="utf-8")):
+            raw = (match.group(1) or match.group(2)).strip().rstrip(".,:;]")
+            path = str(Path(raw).expanduser())
+            normalized = str(Path(path).resolve(strict=False))
+            if normalized in registered or normalized in hints:
+                continue
+            candidate = Path(normalized)
+            hints[normalized] = NoteHint(normalized, str(note), owner_resolver(candidate), candidate.exists())
+    return list(hints.values())
 
 
 def worktrees() -> list[Worktree]:
@@ -87,6 +127,7 @@ def current_worktree() -> str:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--base", help="approved integration branch used only for merge evidence")
+    parser.add_argument("--notes-dir", type=Path, default=DEFAULT_NOTES_DIR, help="read-only Markdown registry of cleanup discovery hints")
     parser.add_argument(
         "--report",
         action="store_true",
@@ -100,6 +141,8 @@ def main() -> int:
         return 2
 
     checked_out = {entry.branch for entry in entries if entry.branch}
+    registered = {str(Path(entry.path).resolve(strict=False)) for entry in entries}
+    note_hints = discover_note_hints(args.notes_dir, registered)
     current = current_worktree()
     if args.report:
         print("| Worktree/path | Branch or HEAD | Current state | Merge evidence |")
@@ -119,6 +162,9 @@ def main() -> int:
             if branch not in checked_out:
                 merge = merged(branch, args.base)
                 print(f"| — | {branch} | local branch, not checked out | {merge} |")
+        for hint in note_hints:
+            state = f"registry hint, {'exists' if hint.exists else 'missing'}, owner: {hint.owner}, source: {hint.note}"
+            print(f"| {hint.path} | note hint | {state} | not evaluated |")
         return 0
 
     print("| Worktree/path | Branch or HEAD | State | Merge evidence | Proposed action | Requires approval |")
@@ -163,6 +209,9 @@ def main() -> int:
             action = "candidate: delete branch" if merge == "merged" else "keep / needs investigation"
             approval = "yes for deletion"
         print(f"| — | {branch} | not checked out | {merge} | {action} | {approval} |")
+    for hint in note_hints:
+        state = f"registry hint, {'exists' if hint.exists else 'missing'}, owner: {hint.owner}, source: {hint.note}"
+        print(f"| {hint.path} | note hint | {state} | not evaluated | needs investigation | yes for any removal |")
     return 0
 
 

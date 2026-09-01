@@ -41,6 +41,14 @@ discovers the updated skills. Lifecycle telemetry is optional; set
 `BASICS_RUNS_DIR` when its status records should not use Codex's default state
 directory.
 
+Set `BASICS_WORKTREE_ROOT` to place disposable Build worktrees and large build artifacts on suitable local storage. This host uses `/temp`:
+
+```bash
+export BASICS_WORKTREE_ROOT=/temp
+```
+
+This setting does not move durable status archives and never migrates existing runs.
+
 ## Other agents
 
 Use `.agents/adapter-contract.md` and `platforms/reference/README.md` to build

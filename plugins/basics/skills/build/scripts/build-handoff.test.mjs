@@ -75,8 +75,8 @@ test("ledger enforces one scoped Red/Fixer round, approval, budgets, and readine
   const authorizationPath = join(statusDir, "handoffs", "authorizations.json");
   const reportPath = join(root, "report.md");
   try {
-    initialize({ "status-dir": statusDir, run: "run-one", repo: "fixture", base: "abc", branch: "build/run-one" });
-    assert.throws(() => initialize({ "status-dir": statusDir, run: "run-one", repo: "other", base: "abc", branch: "build/run-one" }), /repo does not match/);
+    initialize({ "status-dir": statusDir, run: "run-one", repo: "fixture", base: "abc", branch: "build/run-one", environment: {} });
+    assert.throws(() => initialize({ "status-dir": statusDir, run: "run-one", repo: "other", base: "abc", branch: "build/run-one", environment: {} }), /repo does not match/);
     writeFileSync(planPath, `${JSON.stringify(manifest(), null, 2)}\n`);
     writeFileSync(scopePath, "criterion-1\n");
     writeFileSync(authorizationPath, `${JSON.stringify(authorizations(), null, 2)}\n`);
@@ -155,6 +155,8 @@ test("ledger enforces one scoped Red/Fixer round, approval, budgets, and readine
     assert.equal(result.ready, false);
     assert.match(readFileSync(reportPath, "utf8"), /Not ready for merge approval/);
     const ledger = JSON.parse(readFileSync(join(statusDir, "handoffs", "run-ledger.json"), "utf8"));
+    assert.equal(ledger.worktree.runRoot.endsWith("/build-runs/run-one"), true);
+    assert.equal(ledger.worktree.integration.endsWith("/build-runs/run-one/integration"), true);
     assert.equal(ledger.stages.brainstorm.manifest, planPath);
     assert.equal(ledger.proxyWarnings.length, 1);
   } finally {

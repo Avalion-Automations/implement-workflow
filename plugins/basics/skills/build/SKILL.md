@@ -11,12 +11,14 @@ Read [references/orchestration-contract.md](references/orchestration-contract.md
 
 ## Source and run setup
 
-Use the primary agent as Build orchestrator with `model: "gpt-5.6-sol"` and `reasoning_effort: "xhigh"` when available. Inspect applicable `AGENTS.md`, repository, base commit, branch, status, and validation commands. Require a clean source worktree; ask how to handle user changes.
+Use `model: "gpt-5.6-sol"` and `reasoning_effort: "xhigh"` when available. Inspect `AGENTS.md`, repository, base, branch, status, and validation commands. Require a clean source worktree.
 
-Create only after checking that the paths and branch do not exist:
+Before Git mutation, run `scripts/worktree-root.mjs resolve --run <run-id>`. It preflights `BASICS_WORKTREE_ROOT` or the platform temporary fallback. `build-handoff.mjs init` records its absolute paths; every child lane inherits them.
+
+Create only after checking that the recorded path and branch do not exist:
 
 ```text
-/tmp/build-runs/<run-id>/integration
+<worktree-root>/build-runs/<run-id>/integration
 branch: build/<run-id>-integration
 archive: <state-root>/build-runs/<run-slug>/status (Codex defaults to `<user-home>/.codex`; set `BASICS_RUNS_DIR` to override)
 ```
