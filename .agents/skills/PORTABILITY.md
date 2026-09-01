@@ -8,8 +8,8 @@ capability-dependent workflow.
   bug-list-generator, bug-validation-and-regression,
   capture-behavioral-baseline, debugging-evidence-capture, doc-baseline,
   feat-commit-no-scope, hypothesis-evaluation, hypothesis-formulation,
-  hypothesis-instrumentation, review-promote-docs, run, skill-check, verify,
-  and work-cleanup.
+  hypothesis-instrumentation, review-promote-docs, run, run-ledger-times,
+  skill-check, verify, and work-cleanup.
 - **Capability-dependent:** brainstorm, build, blue-team,
   failing-test-generator, fixer-team, and red-team. These need one or more of
   fresh-context delegation, worktrees, lifecycle hooks, or status telemetry.
