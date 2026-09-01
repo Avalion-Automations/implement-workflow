@@ -4,7 +4,9 @@
 
 - Treat `.agents/skills/` and `platforms/codex/` as canonical.
 - Treat `plugins/basics/` as generated. After canonical changes, regenerate it with `node scripts/sync-codex-basics.mjs`, then require `node scripts/sync-codex-basics.mjs --check` to pass.
-- Preserve a single version in `platforms/codex/plugin.json` and `plugins/basics/.codex-plugin/plugin.json`. For a release, bump the requested semantic version and replace the Codex cachebuster; do not append cachebusters.
+- Preserve a single version in `platforms/codex/plugin.json` and `plugins/basics/.codex-plugin/plugin.json`.
+- Every repository change that will be committed or pushed must increment the plugin's semantic version by at least one patch level and replace the Codex cachebuster. A new cachebuster with an unchanged semantic version is not a version increment. Apply this rule to policy, documentation, skill, script, hook, metadata, packaging, and generated-package changes; there are no publishable-change exceptions.
+- Never commit, push, publish, or install changed plugin content while its semantic version still matches the version at the pre-change commit. Regenerate `plugins/basics/` after changing the canonical version and verify both manifests contain the same new version.
 
 ## Mandatory hook refresh for Codex updates
 
