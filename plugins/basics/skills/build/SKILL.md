@@ -1,6 +1,6 @@
 ---
 name: build
-description: Run an approval-gated feature workflow with test-first implementation, review, fixes, integration, and merge-readiness reporting.
+description: Run an approval-gated or bounded-unattended feature workflow with test-first implementation, review, fixes, integration, and merge-readiness reporting.
 ---
 
 # Build
@@ -11,7 +11,7 @@ Read [references/orchestration-contract.md](references/orchestration-contract.md
 
 ## Source and run setup
 
-Use `model: "gpt-5.6-sol"` and `reasoning_effort: "xhigh"` when available. Inspect `AGENTS.md`, repository, base, branch, status, and validation commands. Require a clean source worktree.
+Use `model: "gpt-5.6-sol"` and `reasoning_effort: "xhigh"` when available. Inspect `AGENTS.md`, repository state, and validation commands. Require a clean source worktree.
 
 Before Git mutation, run `scripts/worktree-root.mjs resolve --run <run-id>`. It preflights `BASICS_WORKTREE_ROOT` or the platform temporary fallback. `build-handoff.mjs init` records its absolute paths; every child lane inherits them.
 
@@ -27,19 +27,15 @@ Preserve the integration worktree and branch. Never force-push, reset, implicitl
 
 ## Commit-subject policy
 
-Every commit created by Build, Blue Team, Fixer Team, or a Build-directed
-specialist must follow [$basics:feat-commit-no-scope](../feat-commit-no-scope/SKILL.md).
-Inspect the staged diff, use a scope-free `type: concrete outcome` subject, and
-validate it before committing:
+All workflow commits must follow [$basics:feat-commit-no-scope](../feat-commit-no-scope/SKILL.md).
+Inspect the staged diff and validate a scope-free `type: concrete outcome` subject:
 
 ```bash
 node <plugin>/skills/feat-commit-no-scope/scripts/validate_commit_subject.js \
   "type: concrete outcome"
 ```
 
-For release and integration commits use
-`chore: merge <concrete description>` for merge commits. Do not use a
-parenthesized scope or `!` marker.
+Use `chore: merge <concrete description>` for merge commits. Never use a scope or `!`.
 
 ## Explicit skill routing
 
@@ -75,8 +71,8 @@ Run stages serially. Every team orchestration and specialist delegation must sta
 
 Aim to finish within 30 minutes. Before every team or specialist launch, run `build-handoff.mjs time-budget`. At `target-exceeded`, stop expanding investigation and defer non-blocking findings. At `hard-stop` (45 minutes), launch no new agents: finish only an already-running deterministic check, then deliver the best preserved candidate as blocked if an approved criterion remains unresolved. Only explicit user direction may extend the run.
 
-1. **Brainstorm and authorization preflight.** Invoke `$basics:brainstorm` in the integration worktree. When existing behavior is in scope, require its named regression-readiness and behavioral-baseline routing. Use exactly two independent Terra/medium workers and keep the Build orchestrator as the Sol/xhigh planner. Store `docs/build/<run-id>-plan.md`, `<status-dir>/handoffs/plan.json`, and `<status-dir>/handoffs/authorizations.json`; validate and record the plan, then validate the authorization manifest. Do not launch seed, Blue, Red, Fixer, verification, or mutating setup while an authorization remains unresolved.
-2. **Consolidated approval.** Present the plan, scope, and complete authorization inventory together and stop once for explicit approval. Bind all three hashes to the same event with `build-handoff.mjs approve --authorizations <authorization-manifest>`. Any material plan, scope, target, identity, command, consequence, recovery route, or authorization change invalidates approval and returns to Brainstorm. Check all three before seeding, integration, and merge-readiness reporting. The authorization manifest may preauthorize bounded standalone recovery, but never a protected-branch merge, unbounded destructive action, or materially expanded scope.
+1. **Brainstorm and authorization preflight.** Invoke `$basics:brainstorm` in the integration worktree. Route existing behavior through regression-readiness and behavioral-baseline checks. Use two independent Terra/medium workers with the Sol/xhigh Build orchestrator. Store the plan plus `plan.json` and `authorizations.json`; validate both manifests. From explicit intent, choose `interactive` or `bounded-unattended`. For unattended execution, preflight failure branches, capped retries, derived values, required sandbox/network grants, costs, and stops. Do not begin later stages with unresolved authorization.
+2. **Consolidated approval and unattended arming.** Present plan, scope, authorization inventory, and mode once. Bind their hashes with `build-handoff.mjs approve --authorizations <authorization-manifest>`. Before declaring unattended readiness, acquire all separately enforced, scoped host capabilities; authorization never bypasses the sandbox. Within approved triggers, validations, targets, consequences, bounds, and attempts, run listed primary, recovery, and derived operations without re-prompting. Record evidence without rewriting the manifest. Listed fallbacks and deterministic substitutions remain approved. Stop for envelope violations, integrity failure, exhausted bounds, unapproved information loss, material scope decisions, or protected-branch merges. Check approval and applicable operation IDs before seeding, external mutation groups, integration, and readiness reporting.
 3. **Seed tests.** Use `$basics:bug-validation-and-regression` to translate each observable criterion into the smallest failing automated test; retain manual/legal/visual/external criteria as explicit checks. Do not modify product code or weaken tests. Commit the plan and tests, record exact failures in `seed.json`, and hand off its path.
 4. **Blue Team.** Invoke `$basics:blue-team` from the seeded commit. It owns isolated specialist worktrees, explicitly uses `$basics:bug-validation-and-regression` and `$basics:run` where applicable, and returns `blue.json`, its candidate branch/commit, and validation artifacts. Do not let Blue workers edit the Build integration worktree.
 5. **One scoped Red Team pass.** Invoke `$basics:red-team` once against the immutable Blue candidate with the approved plan, scope, criteria, and changed paths. Eligible findings must demonstrate and cite an approved-criterion failure or in-scope regression. Record all other findings as visible `deferred` items; they neither enter Fixer nor block readiness. Use `needs-context` only for an in-scope decision that prevents judging a criterion.

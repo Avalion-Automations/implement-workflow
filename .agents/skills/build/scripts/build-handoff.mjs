@@ -12,6 +12,7 @@ const REPAIR_DISPOSITIONS = new Set(["eligible", "deferred", "needs-context", "r
 const SCOPE_DISPOSITIONS = new Set(["in-scope", "in-scope-nonblocking", "out-of-scope"]);
 const REPAIR_RESULTS = new Set(["fixed", "not-reproducible", "needs-context", "blocked"]);
 const AUTHORIZATION_CATEGORIES = ["filesystem", "git", "dependencies", "external-systems", "identity-access", "cost-lifecycle", "recovery"];
+const AUTHORIZATION_EXECUTION_MODES = new Set(["interactive", "bounded-unattended"]);
 const TIME_BUDGET = { targetMinutes: 30, hardMinutes: 45 };
 const REQUIRED_ARRAYS = ["decisions", "criteria", "inputs", "outputs", "checks", "findings", "blockers", "artifacts", "next"];
 const STAGE = /^(?:brainstorm|seed-tests|blue|red-[1-9]\d*|fixer-[1-9]\d*|integration)$/;
@@ -200,6 +201,25 @@ function validateAuthorizationManifest(value, expectedRunId = "") {
   for (const category of AUTHORIZATION_CATEGORIES) if (!reviewed.has(category)) throw new Error(`Authorization category was not reviewed: ${category}`);
   if (value.unresolved.length) throw new Error("Authorization manifest contains unresolved items");
   if (!value.evidence.length || value.evidence.some((item) => typeof item !== "string" || !item.trim())) throw new Error("Authorization manifest requires discovery evidence");
+  const execution = value.execution === undefined ? { mode: "interactive" } : value.execution;
+  if (!execution || typeof execution !== "object" || Array.isArray(execution)) throw new Error("Authorization execution must be an object");
+  const executionMode = execution.mode || "interactive";
+  if (!AUTHORIZATION_EXECUTION_MODES.has(executionMode)) throw new Error(`Invalid authorization execution mode: ${executionMode}`);
+  if (executionMode === "bounded-unattended") {
+    if (!Number.isInteger(execution.maxAttemptsPerOperation) || execution.maxAttemptsPerOperation < 1 || execution.maxAttemptsPerOperation > 5) {
+      throw new Error("Bounded unattended authorization requires maxAttemptsPerOperation from 1 to 5");
+    }
+    if (!Array.isArray(execution.stopConditions) || execution.stopConditions.length === 0) {
+      throw new Error("Bounded unattended authorization requires explicit stopConditions");
+    }
+    const stopIds = new Set();
+    for (const [index, stop] of execution.stopConditions.entries()) {
+      if (!stop || typeof stop !== "object" || Array.isArray(stop)) throw new Error(`Authorization execution.stopConditions[${index}] must be an object`);
+      for (const field of ["id", "condition", "reason"]) requireString(stop, field, `execution.stopConditions[${index}].`);
+      if (!/^STOP-[A-Z0-9-]+$/.test(stop.id) || stopIds.has(stop.id)) throw new Error(`Authorization execution.stopConditions[${index}].id must be unique and start with STOP-`);
+      stopIds.add(stop.id);
+    }
+  }
   const ids = new Set();
   for (const [index, operation] of value.operations.entries()) {
     if (!operation || typeof operation !== "object" || Array.isArray(operation)) throw new Error(`Authorization operations[${index}] must be an object`);
@@ -208,8 +228,30 @@ function validateAuthorizationManifest(value, expectedRunId = "") {
     ids.add(operation.id);
     if (!AUTHORIZATION_CATEGORIES.includes(operation.category)) throw new Error(`Invalid authorization category: ${operation.category}`);
     if (!Array.isArray(operation.targets) || !operation.targets.length || operation.targets.some((target) => typeof target !== "string" || !target.trim())) throw new Error(`Authorization operations[${index}].targets must contain exact targets`);
+    if (operation.trigger !== undefined && (typeof operation.trigger !== "string" || !operation.trigger.trim())) throw new Error(`Authorization operations[${index}].trigger must be a non-empty string`);
+    if (operation.maxAttempts !== undefined && (!Number.isInteger(operation.maxAttempts) || operation.maxAttempts < 1 || operation.maxAttempts > (execution.maxAttemptsPerOperation || 5))) {
+      throw new Error(`Authorization operations[${index}].maxAttempts exceeds the execution limit`);
+    }
+    if (operation.dependsOn !== undefined && (!Array.isArray(operation.dependsOn) || operation.dependsOn.length === 0 || operation.dependsOn.some((id) => typeof id !== "string" || !id.trim()))) {
+      throw new Error(`Authorization operations[${index}].dependsOn must contain operation IDs`);
+    }
+    if (operation.derivation !== undefined) {
+      if (executionMode !== "bounded-unattended") throw new Error(`Authorization operations[${index}].derivation requires bounded-unattended mode`);
+      if (!operation.derivation || typeof operation.derivation !== "object" || Array.isArray(operation.derivation)) throw new Error(`Authorization operations[${index}].derivation must be an object`);
+      if (!Array.isArray(operation.derivation.inputs) || operation.derivation.inputs.length === 0 || operation.derivation.inputs.some((input) => typeof input !== "string" || !input.trim())) throw new Error(`Authorization operations[${index}].derivation.inputs must contain exact materialized inputs`);
+      for (const field of ["procedure", "validation"]) requireString(operation.derivation, field, `operations[${index}].derivation.`);
+      if (!/\$\{[a-zA-Z][a-zA-Z0-9_.-]*\}/.test(operation.action)) throw new Error(`Authorization operations[${index}].action must name a derived-value placeholder`);
+    }
   }
-  return { ok: true, runId: value.runId, operations: value.operations.length, excluded: value.excluded.length };
+  for (const [index, operation] of value.operations.entries()) {
+    for (const dependency of operation.dependsOn || []) {
+      if (!ids.has(dependency)) throw new Error(`Authorization operations[${index}].dependsOn references unknown operation ${dependency}`);
+      if (dependency === operation.id) throw new Error(`Authorization operations[${index}] cannot depend on itself`);
+    }
+  }
+  const result = { ok: true, runId: value.runId, operations: value.operations.length, excluded: value.excluded.length };
+  if (value.execution !== undefined) result.executionMode = executionMode;
+  return result;
 }
 
 function recordManifest(options) {
@@ -301,7 +343,8 @@ function approve(options) {
   const authorizations = resolve(required(options, "authorizations"));
   const planManifest = readJson(plan);
   validateManifest(planManifest, "plan");
-  validateAuthorizationManifest(readJson(authorizations), planManifest.runId);
+  const authorizationManifest = readJson(authorizations);
+  const authorizationValidation = validateAuthorizationManifest(authorizationManifest, planManifest.runId);
   const ledger = readLedger(paths.ledger);
   if (planManifest.runId !== ledger.runId) throw new Error("Plan runId does not match the run ledger");
   const brainstorm = ledger.stages.brainstorm;
@@ -314,6 +357,7 @@ function approve(options) {
     scopeSha256: hashFile(scope),
     authorizations,
     authorizationsSha256: hashFile(authorizations),
+    executionMode: authorizationValidation.executionMode || "interactive",
     event: required(options, "event"),
     approvedAt: timestamp(),
   };
@@ -333,7 +377,11 @@ function checkApproval(options) {
   if (plan !== ledger.approval.plan || hashFile(plan) !== ledger.approval.planSha256) throw new Error("Approval is stale: plan changed");
   if (scope !== ledger.approval.scope || hashFile(scope) !== ledger.approval.scopeSha256) throw new Error("Approval is stale: scope changed");
   if (authorizations !== ledger.approval.authorizations || hashFile(authorizations) !== ledger.approval.authorizationsSha256) throw new Error("Approval is stale: authorizations changed");
-  return { approved: true, event: ledger.approval.event, approvedAt: ledger.approval.approvedAt };
+  const manifest = readJson(authorizations);
+  const requested = String(options.operations || options.operation || "").split(",").map((id) => id.trim()).filter(Boolean);
+  const approvedIds = new Set(manifest.operations.map(({ id }) => id));
+  for (const id of requested) if (!approvedIds.has(id)) throw new Error(`Authorization operation ${id} is not approved`);
+  return { approved: true, event: ledger.approval.event, approvedAt: ledger.approval.approvedAt, executionMode: ledger.approval.executionMode || "interactive", operations: requested };
 }
 
 function checkBudget(options) {
@@ -414,7 +462,7 @@ function renderReport(options) {
     `- Repository: \`${escapeInline(ledger.source.repo)}\``, `- Base: \`${escapeInline(ledger.source.base)}\``,
     `- Integration branch: \`${escapeInline(ledger.source.branch)}\``, "",
     "## Approval", "", approvalCurrent
-      ? `Approved plan \`${escapeInline(ledger.approval.planSha256)}\`, scope \`${escapeInline(ledger.approval.scopeSha256)}\`, and authorizations \`${escapeInline(ledger.approval.authorizationsSha256)}\` (event \`${escapeInline(ledger.approval.event)}\`).`
+      ? `Approved plan \`${escapeInline(ledger.approval.planSha256)}\`, scope \`${escapeInline(ledger.approval.scopeSha256)}\`, and authorizations \`${escapeInline(ledger.approval.authorizationsSha256)}\` in \`${escapeInline(ledger.approval.executionMode || "interactive")}\` mode (event \`${escapeInline(ledger.approval.event)}\`).`
       : "No current approval is recorded, or the approved plan/scope has changed.", "",
     "## Stage Receipts", "", "| Stage | Status | Commit | Checks | Findings | Deferred | Blockers | Manifest |", "| --- | --- | --- | --- | ---: | ---: | ---: | --- |",
     ...stages.map(([name, stage]) => `| ${cell(name)} | ${cell(stage.status)} | ${cell(stage.commit)} | ${cell(formatChecks(stage.checks))} | ${stage.findings || 0} | ${stage.deferredFindings || 0} | ${stage.blockers || 0} | ${cell(stage.manifest)} |`),
@@ -469,4 +517,4 @@ function usage(code) {
   process.exitCode = code;
 }
 
-export { AUTHORIZATION_CATEGORIES, BUDGETS, TIME_BUDGET, approve, checkApproval, checkBudget, checkTimeBudget, compactReceipt, initialize, recordManifest, renderReport, validateAuthorizationManifest, validateManifest };
+export { AUTHORIZATION_CATEGORIES, AUTHORIZATION_EXECUTION_MODES, BUDGETS, TIME_BUDGET, approve, checkApproval, checkBudget, checkTimeBudget, compactReceipt, initialize, recordManifest, renderReport, validateAuthorizationManifest, validateManifest };

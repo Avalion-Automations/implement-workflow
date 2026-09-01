@@ -31,6 +31,9 @@ const build = readFileSync(join(suiteRoot, "build", "SKILL.md"), "utf8");
 if (!build.includes("Invoke `$basics:red-team` once") || !build.includes("At most one scoped Fixer/Judge pass")) errors.push("Build does not enforce the fast single-pass assurance boundary");
 if (!build.includes("time-budget") || !build.includes("45 minutes")) errors.push("Build does not enforce the elapsed-time gate");
 if (!build.includes("authorizations.json") || !build.includes("Consolidated approval")) errors.push("Build does not enforce consolidated authorization preflight");
+for (const term of ["bounded-unattended", "derived values", "sandbox/network grants", "applicable operation IDs"]) {
+  if (!build.includes(term)) errors.push(`Build does not enforce unattended authorization semantics: ${term}`);
+}
 const hooksPath = join(suiteRoot, "build", "hooks", "hooks.json");
 if (!existsSync(hooksPath)) errors.push("Build is missing hooks/hooks.json");
 else {
@@ -48,6 +51,9 @@ const red = readFileSync(join(suiteRoot, "red-team", "SKILL.md"), "utf8");
 if (!red.includes("as `deferred`") || !red.includes("Return one `red-1.json`")) errors.push("Red does not define Build's scoped deferral mode");
 const contract = readFileSync(join(suiteRoot, "build", "references", "orchestration-contract.md"), "utf8");
 if (!contract.includes("reviewedCategories") || !contract.includes("validate-authorizations")) errors.push("Shared contract does not define the authorization manifest");
+for (const term of ["bounded-unattended", "maxAttemptsPerOperation", '"derivation"', "--operations"]) {
+  if (!contract.includes(term)) errors.push(`Shared contract does not define unattended authorization semantics: ${term}`);
+}
 for (const name of names.filter((name) => name !== "build")) {
   const copy = readFileSync(join(suiteRoot, name, "references", "orchestration-contract.md"), "utf8");
   if (copy !== contract) errors.push(`${name} orchestration contract is stale`);

@@ -35,6 +35,25 @@ function authorizations(overrides = {}) {
   };
 }
 
+function unattendedAuthorizations(overrides = {}) {
+  return authorizations({
+    execution: {
+      mode: "bounded-unattended",
+      maxAttemptsPerOperation: 2,
+      stopConditions: [
+        { id: "STOP-001", condition: "An operation would exceed its approved targets or cost bounds", reason: "New user authority is required" },
+        { id: "STOP-002", condition: "A protected-branch merge is the next action", reason: "Merge approval is always separate" },
+      ],
+    },
+    operations: [
+      { id: "AUTH-001", category: "external-systems", action: "create the named review resource", targets: ["projects/example/review"], consequence: "creates one bounded review resource", bounds: "one resource and no more than USD 10 monthly" },
+      { id: "AUTH-REC-001", category: "recovery", trigger: "AUTH-001 reports that the default edition is incompatible with the approved tier", action: "retry creation with --edition=ENTERPRISE", targets: ["projects/example/review"], consequence: "creates the same resource with an explicit compatible edition", bounds: "same version, tier, region, storage, IAM, and cost ceiling", dependsOn: ["AUTH-001"], maxAttempts: 1 },
+      { id: "AUTH-DER-001", category: "external-systems", action: "import --approval approve:${resolved.sha256}", targets: ["projects/example/review/database", "resolved-manifest.json"], consequence: "imports only the verified materialized rows", bounds: "source hash and row count must match the approved fixture", dependsOn: ["AUTH-001"], derivation: { inputs: ["resolved-manifest.json"], procedure: "Compute SHA-256 over the exact materialized bytes", validation: "Verify the approved source hash, row count, checksums, and immutable generations before substitution" } },
+    ],
+    ...overrides,
+  });
+}
+
 test("manifest validation enforces the common envelope", () => {
   assert.deepEqual(validateManifest(manifest()), { ok: true, kind: "plan", runId: "run-one", stage: "brainstorm", status: "completed" });
   assert.throws(() => validateManifest({ ...manifest(), blockers: undefined }), /blockers must be an array/);
@@ -54,6 +73,20 @@ test("authorization validation requires complete bounded preflight", () => {
   assert.throws(() => validateAuthorizationManifest(authorizations({ reviewedCategories: ["filesystem"] })), /category was not reviewed/);
   assert.throws(() => validateAuthorizationManifest(authorizations({ unresolved: ["cloud identity"] })), /unresolved items/);
   assert.throws(() => validateAuthorizationManifest(authorizations({ operations: [{ ...authorizations().operations[0], targets: [] }] })), /exact targets/);
+});
+
+test("bounded unattended authorization validates recovery and deterministic derivation envelopes", () => {
+  assert.deepEqual(validateAuthorizationManifest(unattendedAuthorizations()), {
+    ok: true,
+    runId: "run-one",
+    operations: 3,
+    excluded: 1,
+    executionMode: "bounded-unattended",
+  });
+  assert.throws(() => validateAuthorizationManifest(unattendedAuthorizations({ execution: { mode: "bounded-unattended", maxAttemptsPerOperation: 0, stopConditions: [] } })), /maxAttemptsPerOperation/);
+  assert.throws(() => validateAuthorizationManifest(unattendedAuthorizations({ execution: { mode: "unknown", maxAttemptsPerOperation: 2, stopConditions: [] } })), /execution mode/);
+  assert.throws(() => validateAuthorizationManifest(unattendedAuthorizations({ operations: [{ ...unattendedAuthorizations().operations[1], dependsOn: ["AUTH-MISSING"] }] })), /unknown operation/);
+  assert.throws(() => validateAuthorizationManifest(unattendedAuthorizations({ operations: [{ ...unattendedAuthorizations().operations[2], derivation: { inputs: [], procedure: "hash", validation: "check" } }] })), /derivation.inputs/);
 });
 
 test("compact receipts omit detailed evidence and cap artifact references", () => {
@@ -79,7 +112,7 @@ test("ledger enforces one scoped Red/Fixer round, approval, budgets, and readine
     assert.throws(() => initialize({ "status-dir": statusDir, run: "run-one", repo: "other", base: "abc", branch: "build/run-one", environment: {} }), /repo does not match/);
     writeFileSync(planPath, `${JSON.stringify(manifest(), null, 2)}\n`);
     writeFileSync(scopePath, "criterion-1\n");
-    writeFileSync(authorizationPath, `${JSON.stringify(authorizations(), null, 2)}\n`);
+    writeFileSync(authorizationPath, `${JSON.stringify(unattendedAuthorizations(), null, 2)}\n`);
     const recordStage = (name, kind, status, extra = {}) => {
       const path = join(statusDir, "handoffs", `${name}.json`);
       writeFileSync(path, `${JSON.stringify(manifest({ kind, stage: name, status, ...extra }), null, 2)}\n`);
@@ -87,8 +120,10 @@ test("ledger enforces one scoped Red/Fixer round, approval, budgets, and readine
     };
     let result = recordManifest({ "status-dir": statusDir, file: planPath });
     assert.equal(result.stage, "brainstorm");
-    approve({ "status-dir": statusDir, plan: planPath, scope: scopePath, authorizations: authorizationPath, event: "approval-1" });
-    assert.equal(checkApproval({ "status-dir": statusDir, plan: planPath, scope: scopePath, authorizations: authorizationPath }).approved, true);
+    const approved = approve({ "status-dir": statusDir, plan: planPath, scope: scopePath, authorizations: authorizationPath, event: "approval-1" });
+    assert.equal(approved.executionMode, "bounded-unattended");
+    assert.deepEqual(checkApproval({ "status-dir": statusDir, plan: planPath, scope: scopePath, authorizations: authorizationPath, operations: "AUTH-001,AUTH-REC-001" }).operations, ["AUTH-001", "AUTH-REC-001"]);
+    assert.throws(() => checkApproval({ "status-dir": statusDir, plan: planPath, scope: scopePath, authorizations: authorizationPath, operations: "AUTH-MISSING" }), /not approved/);
 
     recordStage("seed-tests", "seed", "completed", {
       source: { repo: "fixture", base: "abc", commit: "seed" },
@@ -138,7 +173,7 @@ test("ledger enforces one scoped Red/Fixer round, approval, budgets, and readine
     assert.throws(() => checkApproval({ "status-dir": statusDir, plan: planPath, scope: scopePath, authorizations: authorizationPath }), /scope changed/);
 
     writeFileSync(scopePath, "criterion-1\n");
-    writeFileSync(authorizationPath, `${JSON.stringify(authorizations({ evidence: ["changed preview"] }), null, 2)}\n`);
+    writeFileSync(authorizationPath, `${JSON.stringify(unattendedAuthorizations({ evidence: ["changed preview"] }), null, 2)}\n`);
     assert.throws(() => checkApproval({ "status-dir": statusDir, plan: planPath, scope: scopePath, authorizations: authorizationPath }), /authorizations changed/);
 
     const largeOutput = join(root, "output.log");
