@@ -10,6 +10,7 @@ const CHECK_RESULTS = new Set(["passed", "failed", "blocked", "expected-failure"
 const REPAIR_DISPOSITIONS = new Set(["eligible", "deferred", "needs-context", "rejected"]);
 const SCOPE_DISPOSITIONS = new Set(["in-scope", "in-scope-nonblocking", "out-of-scope"]);
 const REPAIR_RESULTS = new Set(["fixed", "not-reproducible", "needs-context", "blocked"]);
+const AUTHORIZATION_CATEGORIES = ["filesystem", "git", "dependencies", "external-systems", "identity-access", "cost-lifecycle", "recovery"];
 const TIME_BUDGET = { targetMinutes: 30, hardMinutes: 45 };
 const REQUIRED_ARRAYS = ["decisions", "criteria", "inputs", "outputs", "checks", "findings", "blockers", "artifacts", "next"];
 const STAGE = /^(?:brainstorm|seed-tests|blue|red-[1-9]\d*|fixer-[1-9]\d*|integration)$/;
@@ -39,6 +40,7 @@ if (directExecution) {
       case "record": print(recordManifest(options)); break;
       case "approve": print(approve(options)); break;
       case "check-approval": print(checkApproval(options)); break;
+      case "validate-authorizations": print(validateAuthorizationManifest(readJson(required(options, "file")), options.run)); break;
       case "budget": print(checkBudget(options)); break;
       case "time-budget": print(checkTimeBudget(options)); break;
       case "report": print(renderReport(options)); break;
@@ -183,6 +185,29 @@ function requireString(value, field, prefix = "") {
   if (typeof value[field] !== "string" || !value[field].trim()) throw new Error(`Manifest ${prefix}${field} must be a non-empty string`);
 }
 
+function validateAuthorizationManifest(value, expectedRunId = "") {
+  if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("Authorization manifest must be a JSON object");
+  if (value.schemaVersion !== 1 || value.kind !== "authorization") throw new Error("Authorization manifest must use schemaVersion 1 and kind authorization");
+  requireString(value, "runId");
+  if (expectedRunId && value.runId !== expectedRunId) throw new Error(`Authorization runId ${value.runId} does not match ${expectedRunId}`);
+  if (value.status !== "ready") throw new Error("Authorization manifest status must be ready");
+  for (const field of ["reviewedCategories", "operations", "excluded", "unresolved", "evidence"]) if (!Array.isArray(value[field])) throw new Error(`Authorization manifest ${field} must be an array`);
+  const reviewed = new Set(value.reviewedCategories);
+  for (const category of AUTHORIZATION_CATEGORIES) if (!reviewed.has(category)) throw new Error(`Authorization category was not reviewed: ${category}`);
+  if (value.unresolved.length) throw new Error("Authorization manifest contains unresolved items");
+  if (!value.evidence.length || value.evidence.some((item) => typeof item !== "string" || !item.trim())) throw new Error("Authorization manifest requires discovery evidence");
+  const ids = new Set();
+  for (const [index, operation] of value.operations.entries()) {
+    if (!operation || typeof operation !== "object" || Array.isArray(operation)) throw new Error(`Authorization operations[${index}] must be an object`);
+    for (const field of ["id", "category", "action", "consequence", "bounds"]) requireString(operation, field, `operations[${index}].`);
+    if (!/^AUTH-[A-Z0-9-]+$/.test(operation.id) || ids.has(operation.id)) throw new Error(`Authorization operations[${index}].id must be unique and start with AUTH-`);
+    ids.add(operation.id);
+    if (!AUTHORIZATION_CATEGORIES.includes(operation.category)) throw new Error(`Invalid authorization category: ${operation.category}`);
+    if (!Array.isArray(operation.targets) || !operation.targets.length || operation.targets.some((target) => typeof target !== "string" || !target.trim())) throw new Error(`Authorization operations[${index}].targets must contain exact targets`);
+  }
+  return { ok: true, runId: value.runId, operations: value.operations.length, excluded: value.excluded.length };
+}
+
 function recordManifest(options) {
   const paths = pathsFor(options);
   const manifestPath = resolve(required(options, "file"));
@@ -269,8 +294,10 @@ function approve(options) {
   const paths = pathsFor(options);
   const plan = resolve(required(options, "plan"));
   const scope = resolve(required(options, "scope"));
+  const authorizations = resolve(required(options, "authorizations"));
   const planManifest = readJson(plan);
   validateManifest(planManifest, "plan");
+  validateAuthorizationManifest(readJson(authorizations), planManifest.runId);
   const ledger = readLedger(paths.ledger);
   if (planManifest.runId !== ledger.runId) throw new Error("Plan runId does not match the run ledger");
   const brainstorm = ledger.stages.brainstorm;
@@ -281,6 +308,8 @@ function approve(options) {
     planSha256: hashFile(plan),
     scope,
     scopeSha256: hashFile(scope),
+    authorizations,
+    authorizationsSha256: hashFile(authorizations),
     event: required(options, "event"),
     approvedAt: timestamp(),
   };
@@ -296,8 +325,10 @@ function checkApproval(options) {
   if (!ledger.approval) throw new Error("No approval is recorded");
   const plan = resolve(required(options, "plan"));
   const scope = resolve(required(options, "scope"));
+  const authorizations = resolve(required(options, "authorizations"));
   if (plan !== ledger.approval.plan || hashFile(plan) !== ledger.approval.planSha256) throw new Error("Approval is stale: plan changed");
   if (scope !== ledger.approval.scope || hashFile(scope) !== ledger.approval.scopeSha256) throw new Error("Approval is stale: scope changed");
+  if (authorizations !== ledger.approval.authorizations || hashFile(authorizations) !== ledger.approval.authorizationsSha256) throw new Error("Approval is stale: authorizations changed");
   return { approved: true, event: ledger.approval.event, approvedAt: ledger.approval.approvedAt };
 }
 
@@ -379,7 +410,7 @@ function renderReport(options) {
     `- Repository: \`${escapeInline(ledger.source.repo)}\``, `- Base: \`${escapeInline(ledger.source.base)}\``,
     `- Integration branch: \`${escapeInline(ledger.source.branch)}\``, "",
     "## Approval", "", approvalCurrent
-      ? `Approved plan \`${escapeInline(ledger.approval.planSha256)}\` with scope \`${escapeInline(ledger.approval.scopeSha256)}\` (event \`${escapeInline(ledger.approval.event)}\`).`
+      ? `Approved plan \`${escapeInline(ledger.approval.planSha256)}\`, scope \`${escapeInline(ledger.approval.scopeSha256)}\`, and authorizations \`${escapeInline(ledger.approval.authorizationsSha256)}\` (event \`${escapeInline(ledger.approval.event)}\`).`
       : "No current approval is recorded, or the approved plan/scope has changed.", "",
     "## Stage Receipts", "", "| Stage | Status | Commit | Checks | Findings | Deferred | Blockers | Manifest |", "| --- | --- | --- | --- | ---: | ---: | ---: | --- |",
     ...stages.map(([name, stage]) => `| ${cell(name)} | ${cell(stage.status)} | ${cell(stage.commit)} | ${cell(formatChecks(stage.checks))} | ${stage.findings || 0} | ${stage.deferredFindings || 0} | ${stage.blockers || 0} | ${cell(stage.manifest)} |`),
@@ -402,8 +433,8 @@ function formatChecks(checks = {}) {
 function stageNumber(stage) { return Number(String(stage).match(/-(\d+)$/)?.[1] || 0); }
 
 function currentApproval(approval) {
-  if (!approval || !existsSync(approval.plan) || !existsSync(approval.scope)) return false;
-  return hashFile(approval.plan) === approval.planSha256 && hashFile(approval.scope) === approval.scopeSha256;
+  if (!approval || !existsSync(approval.plan) || !existsSync(approval.scope) || !existsSync(approval.authorizations)) return false;
+  return hashFile(approval.plan) === approval.planSha256 && hashFile(approval.scope) === approval.scopeSha256 && hashFile(approval.authorizations) === approval.authorizationsSha256;
 }
 
 function isWithin(parent, child) {
@@ -430,8 +461,8 @@ function writeAtomic(path, value) {
 }
 function print(value) { process.stdout.write(`${JSON.stringify(value)}\n`); }
 function usage(code) {
-  process.stdout.write("Usage: build-handoff.mjs <init|validate|record|approve|check-approval|budget|time-budget|report> [options]\n");
+  process.stdout.write("Usage: build-handoff.mjs <init|validate|validate-authorizations|record|approve|check-approval|budget|time-budget|report> [options]\n");
   process.exitCode = code;
 }
 
-export { BUDGETS, TIME_BUDGET, approve, checkApproval, checkBudget, checkTimeBudget, compactReceipt, initialize, recordManifest, renderReport, validateManifest };
+export { AUTHORIZATION_CATEGORIES, BUDGETS, TIME_BUDGET, approve, checkApproval, checkBudget, checkTimeBudget, compactReceipt, initialize, recordManifest, renderReport, validateAuthorizationManifest, validateManifest };

@@ -5,13 +5,13 @@ description: Run an approval-gated feature workflow with test-first implementati
 
 # Build
 
-Deliver a reviewed integration branch while keeping planning, implementation, review, repair, and merge authority separate. Never merge to `devel` or another protected user branch without explicit current approval.
+Deliver a reviewed integration branch while keeping planning, execution, and merge authority separate. Never merge to a protected user branch without explicit current approval.
 
-Read [references/orchestration-contract.md](references/orchestration-contract.md) and [references/status-protocol.md](references/status-protocol.md) before starting. They define the shared fresh-context handoff, models, budgets, and telemetry rules. Use `scripts/build-handoff.mjs` for manifests, the run ledger, approval provenance, receipts, and the final report.
+Read [references/orchestration-contract.md](references/orchestration-contract.md) and [references/status-protocol.md](references/status-protocol.md). Use `scripts/build-handoff.mjs` for manifests, ledger, approvals, receipts, and reporting.
 
 ## Source and run setup
 
-Use the primary agent as Build orchestrator with `model: "gpt-5.6-sol"` and `reasoning_effort: "xhigh"` when available. Inspect applicable `AGENTS.md`, the repository, base commit, branch, `git status --short`, and validation commands. Require a clean source worktree; ask how to handle user changes and never overwrite them.
+Use the primary agent as Build orchestrator with `model: "gpt-5.6-sol"` and `reasoning_effort: "xhigh"` when available. Inspect applicable `AGENTS.md`, repository, base commit, branch, status, and validation commands. Require a clean source worktree; ask how to handle user changes.
 
 Create only after checking that the paths and branch do not exist:
 
@@ -21,7 +21,7 @@ branch: build/<run-id>-integration
 archive: <state-root>/build-runs/<run-slug>/status (Codex defaults to `<user-home>/.codex`; set `BASICS_RUNS_DIR` to override)
 ```
 
-Preserve the integration worktree and branch as the delivery artifact. Never force-push, reset, implicitly stash, or merge into the base branch.
+Preserve the integration worktree and branch. Never force-push, reset, implicitly stash, or merge into the base branch.
 
 ## Commit-subject policy
 
@@ -35,7 +35,7 @@ node <plugin>/skills/feat-commit-no-scope/scripts/validate_commit_subject.js \
   "type: concrete outcome"
 ```
 
-This applies to release and integration commits as well: use
+For release and integration commits use
 `chore: merge <concrete description>` for merge commits. Do not use a
 parenthesized scope or `!` marker.
 
@@ -65,8 +65,7 @@ that order. Record a limitation rather than claiming an unsupported skill ran.
 Before Brainstorm, initialize the ledger with the commands in the
 [status protocol](references/status-protocol.md#commands), then initialize
 `build-handoff.mjs`. Use the locked [assets/dashboard](assets/dashboard/)
-source. Browser or telemetry failure is disclosed but never weakens
-source-control gates.
+source. Disclose browser or telemetry failure without weakening gates.
 
 ## Fast workflow and time gate
 
@@ -74,21 +73,21 @@ Run stages serially. Every team orchestration and specialist delegation must sta
 
 Aim to finish within 30 minutes. Before every team or specialist launch, run `build-handoff.mjs time-budget`. At `target-exceeded`, stop expanding investigation and defer non-blocking findings. At `hard-stop` (45 minutes), launch no new agents: finish only an already-running deterministic check, then deliver the best preserved candidate as blocked if an approved criterion remains unresolved. Only explicit user direction may extend the run.
 
-1. **Brainstorm.** Invoke `$basics:brainstorm` in the integration worktree. When existing behavior is in scope, require its named regression-readiness and behavioral-baseline routing. Use exactly two independent Terra/medium workers and keep the Build orchestrator as the Sol/xhigh planner. Store `docs/build/<run-id>-plan.md` and `<status-dir>/handoffs/plan.json`; record both. Present the plan and stop for explicit approval.
-2. **Approval.** Record the approved plan and scope hashes with `build-handoff.mjs approve`. Any material scope or plan change invalidates approval and returns to Brainstorm. Check approval before seeding, integration, and merge-readiness reporting.
+1. **Brainstorm and authorization preflight.** Invoke `$basics:brainstorm` in the integration worktree. When existing behavior is in scope, require its named regression-readiness and behavioral-baseline routing. Use exactly two independent Terra/medium workers and keep the Build orchestrator as the Sol/xhigh planner. Store `docs/build/<run-id>-plan.md`, `<status-dir>/handoffs/plan.json`, and `<status-dir>/handoffs/authorizations.json`; validate and record the plan, then validate the authorization manifest. Do not launch seed, Blue, Red, Fixer, verification, or mutating setup while an authorization remains unresolved.
+2. **Consolidated approval.** Present the plan, scope, and complete authorization inventory together and stop once for explicit approval. Bind all three hashes to the same event with `build-handoff.mjs approve --authorizations <authorization-manifest>`. Any material plan, scope, target, identity, command, consequence, recovery route, or authorization change invalidates approval and returns to Brainstorm. Check all three before seeding, integration, and merge-readiness reporting. The authorization manifest may preauthorize bounded standalone recovery, but never a protected-branch merge, unbounded destructive action, or materially expanded scope.
 3. **Seed tests.** Use `$basics:bug-validation-and-regression` to translate each observable criterion into the smallest failing automated test; retain manual/legal/visual/external criteria as explicit checks. Do not modify product code or weaken tests. Commit the plan and tests, record exact failures in `seed.json`, and hand off its path.
 4. **Blue Team.** Invoke `$basics:blue-team` from the seeded commit. It owns isolated specialist worktrees, explicitly uses `$basics:bug-validation-and-regression` and `$basics:run` where applicable, and returns `blue.json`, its candidate branch/commit, and validation artifacts. Do not let Blue workers edit the Build integration worktree.
 5. **One scoped Red Team pass.** Invoke `$basics:red-team` once against the immutable Blue candidate with the approved plan, scope, criteria, and changed paths. Eligible findings must demonstrate and cite an approved-criterion failure or in-scope regression. Record all other findings as visible `deferred` items; they neither enter Fixer nor block readiness. Use `needs-context` only for an in-scope decision that prevents judging a criterion.
 6. **At most one scoped Fixer/Judge pass.** If Red has eligible findings, invoke `$basics:fixer-team` once for the complete set. Its Planner, Builder, Adversary, and Judge are one batch; the Judge assesses only approved criteria, repaired IDs, repair diff, and relevant regression suite. Defer new outside-scope observations and launch no further Red/Fixer round. An unresolved approved criterion blocks readiness and is preserved for explicit standalone Fixer/Red work. With no eligible findings, record `fixer-1.json` as `not-required`.
 7. **Integrate.** Merge the Blue commit when Fixer is not required, otherwise the Fixer commit accepted by its scoped Judge. Resolve mechanical conflicts only; ask about semantic conflicts. Invoke `$basics:verify` for the complete applicable proof, run the complete relevant suite, and record the final SHA. Do not perform a second Red pass inside Build.
 
-Progress follows recorded stage milestones, never finding volume. Entity status commands already emit lifecycle events; add generic events only for approvals, validation, merges, and telemetry gaps.
+Progress follows stage milestones. Add generic events only for approvals, validation, merges, and telemetry gaps.
 
 ## Delivery
 
-Generate `docs/build/<run-id>-report.md` with `build-handoff.mjs report`, then verify `git diff --check` and commit the report on the integration branch. Return only a concise outcome, readiness state, dashboard URL, branch/commit, and links to the plan/report/manifests. End with exactly `Ready for explicit merge approval` or `Not ready for merge approval`.
+Generate `docs/build/<run-id>-report.md`, verify `git diff --check`, and commit it. Return outcome, readiness, dashboard URL, branch/commit, and artifact links. End with exactly `Ready for explicit merge approval` or `Not ready for merge approval`.
 
-Readiness requires current approval, green relevant validation, a completed scoped Red pass, all eligible Red finding IDs fixed and accepted by the single Fixer/Judge pass (or Fixer explicitly not required), and no in-scope blockers. Deferred findings are reported as residual risk and do not block Build readiness. The report commit never authorizes merging to the protected branch.
+Readiness requires current plan, scope, and authorization approval, green relevant validation, a completed scoped Red pass, all eligible Red finding IDs fixed and accepted by the single Fixer/Judge pass (or Fixer explicitly not required), and no in-scope blockers. Deferred findings are reported as residual risk and do not block Build readiness. The report commit never authorizes merging to the protected branch.
 
 Remove only Build-created temporary snapshots and child worktrees whose commits are merged or intentionally retained. Keep the integration branch/worktree, durable status archive, reports, and all blocking or unmerged artifacts.
 

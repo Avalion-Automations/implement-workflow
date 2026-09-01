@@ -43,6 +43,7 @@ All low-context handoffs live below `<status-dir>`:
 
 ```text
 handoffs/plan.json
+handoffs/authorizations.json
 handoffs/seed.json
 handoffs/blue.json
 handoffs/red-<round>.json
@@ -91,16 +92,40 @@ node <skill>/scripts/build-handoff.mjs time-budget --status-dir <status-dir>
 
 ## Approval provenance
 
-After explicit approval, bind authority to the exact plan and scope files:
+Before requesting approval, write and validate an authorization manifest:
+
+```json
+{
+  "schemaVersion": 1,
+  "kind": "authorization",
+  "runId": "stable run id",
+  "status": "ready",
+  "reviewedCategories": ["filesystem", "git", "dependencies", "external-systems", "identity-access", "cost-lifecycle", "recovery"],
+  "operations": [{ "id": "AUTH-001", "category": "identity-access", "action": "exact command or bounded operation", "targets": ["exact account/resource/path"], "consequence": "what changes and the information/security/cost impact", "bounds": "limits that make this authority safe for unattended use" }],
+  "excluded": [{ "id": "AUTH-X01", "action": "protected branch merge", "reason": "requires separate current approval" }],
+  "unresolved": [],
+  "evidence": ["read-only discovery or exact preview used to build this inventory"]
+}
+```
+
+All seven categories must be reviewed even when no operation is needed. Operations must use stable IDs and exact bounded targets; wildcards, blanket future authority, and unspecified destructive actions are invalid. `excluded` records intentionally unapproved actions and `unresolved` must be empty before approval. Use read-only discovery and exact previews during planning. If exact cloud/IAM/database/deploy commands cannot be known until materialization, split the workflow into a read-only materialization phase followed by this consolidated approval; do not enter the unattended mutating loop first.
+
+```bash
+node <skill>/scripts/build-handoff.mjs validate-authorizations \
+  --file <authorization-manifest> --run <run-id>
+```
+
+After explicit approval, bind authority to the exact plan, scope, and authorization files:
 
 ```bash
 node <skill>/scripts/build-handoff.mjs approve --status-dir <status-dir> \
-  --plan <plan-manifest> --scope <scope-file> --event <approval-event-id>
+  --plan <plan-manifest> --scope <scope-file> \
+  --authorizations <authorization-manifest> --event <approval-event-id>
 node <skill>/scripts/build-handoff.mjs check-approval --status-dir <status-dir> \
-  --plan <plan-manifest> --scope <scope-file>
+  --plan <plan-manifest> --scope <scope-file> --authorizations <authorization-manifest>
 ```
 
-Re-run `check-approval` before seeding, integration, and readiness. Any changed hash invalidates approval. Approval never authorizes merging to a protected branch; that still needs an explicit current merge approval.
+Re-run `check-approval` before seeding, integration, and readiness. Any changed hash invalidates approval. Pass the authorization manifest and applicable operation IDs to every execution agent; agents consume that durable authority instead of asking independently. If an action is absent, exceeds its bounds, or changes target/identity/consequence, stop before it and return to preflight. Treat repeated late prompts for knowable actions as a planning defect. Approval never authorizes merging to a protected branch; that still needs an explicit current merge approval.
 
 ## Time and proxy budgets
 

@@ -30,6 +30,7 @@ if (/no arbitrary iteration limit/i.test(fixer)) errors.push("Fixer still contai
 const build = readFileSync(join(suiteRoot, "build", "SKILL.md"), "utf8");
 if (!build.includes("Invoke `$basics:red-team` once") || !build.includes("At most one scoped Fixer/Judge pass")) errors.push("Build does not enforce the fast single-pass assurance boundary");
 if (!build.includes("time-budget") || !build.includes("45 minutes")) errors.push("Build does not enforce the elapsed-time gate");
+if (!build.includes("authorizations.json") || !build.includes("Consolidated approval")) errors.push("Build does not enforce consolidated authorization preflight");
 const hooksPath = join(suiteRoot, "build", "hooks", "hooks.json");
 if (!existsSync(hooksPath)) errors.push("Build is missing hooks/hooks.json");
 else {
@@ -46,6 +47,7 @@ if (!fixer.includes("Process the complete eligible set in one Planner/Builder/Ad
 const red = readFileSync(join(suiteRoot, "red-team", "SKILL.md"), "utf8");
 if (!red.includes("as `deferred`") || !red.includes("Return one `red-1.json`")) errors.push("Red does not define Build's scoped deferral mode");
 const contract = readFileSync(join(suiteRoot, "build", "references", "orchestration-contract.md"), "utf8");
+if (!contract.includes("reviewedCategories") || !contract.includes("validate-authorizations")) errors.push("Shared contract does not define the authorization manifest");
 for (const name of names.filter((name) => name !== "build")) {
   const copy = readFileSync(join(suiteRoot, name, "references", "orchestration-contract.md"), "utf8");
   if (copy !== contract) errors.push(`${name} orchestration contract is stale`);
