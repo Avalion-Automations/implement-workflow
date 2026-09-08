@@ -9,6 +9,7 @@ sync that source into their native skill discovery layout.
 - `.agents/skills/` — shared skills, scripts, references, and assets.
 - `.agents/adapter-contract.md` — required and optional host capabilities.
 - `platforms/codex/` — Codex-only manifest, metadata, hooks, and installer.
+- `platforms/claude/` — Claude Code manifest and generated host-neutral skills.
 - `plugins/basics/` — the install-ready Codex package generated from the core.
 
 ## Codex: Basics
@@ -55,3 +56,17 @@ Use `.agents/adapter-contract.md` and `platforms/reference/README.md` to build
 an adapter for Claude or a custom coding agent. Do not copy Codex hook events,
 OpenAI metadata, or the dashboard unless the target host provides equivalent
 features.
+
+## Claude Code: Basics
+
+The Claude Code adapter is generated from the same canonical skill source.
+Create or verify it with:
+
+```bash
+node scripts/sync-claude-skills.mjs
+node scripts/sync-claude-skills.mjs --check
+```
+
+See `platforms/claude/README.md` for the local-plugin layout, invocation, and
+host-capability fallbacks. The adapter does not install, configure, or
+authenticate Claude Code.
