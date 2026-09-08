@@ -75,7 +75,7 @@ test("Claude adapter documents model and capability fallbacks", () => {
 test("RT-FINAL-001: omitted lifecycle resources are not operational dependencies", () => {
   assertPackageExcludes([
     [/references\/status-protocol\.md/, "omitted status protocol reference"],
-    [/scripts\/build-status(?:\.test)?\.mjs/, "omitted status normalizer command"],
+    [/\bbuild-status(?:\.test)?\.mjs\b/, "omitted status normalizer command"],
     [/scripts\/check-build-suite\.mjs/, "omitted suite checker command"],
     [/assets\/dashboard/, "omitted dashboard dependency"]
   ]);
