@@ -37,6 +37,7 @@ function omit(path) {
 
 function adapt(content) {
   return content
+    .replaceAll("\r\n", "\n")
     .replaceAll("$basics:", "/")
     .replaceAll("gpt-5.6-sol", "host-selected model")
     .replaceAll("gpt-5.6-terra", "host-selected model")
