@@ -4,7 +4,7 @@ Read this reference when Build delegates a stage or a team delegates a specialis
 
 ## Context isolation
 
-- Start every team orchestrator, specialist, adversary, judge, and final validator with `fork_turns: "none"`. Never inherit the parent conversation.
+- Start every team orchestrator, specialist, adversary, judge, and final validator with `fresh-context isolation: "none"`. Never inherit the parent conversation.
 - A delegation prompt contains only: objective; immutable source commit/snapshot/worktree; allowed scope; decision/criterion/finding IDs; exact manifest, artifact, and log paths; required checks; and the terminal receipt contract.
 - Never paste earlier reports, raw test output, full diffs, or chat history into a prompt. Point to durable artifacts and require the agent to read only the files needed for its bounded task.
 - Keep the parent compact after each stage: reload `run-ledger.json` and the latest required manifest; retain only unresolved IDs and the next gate in conversation.
@@ -12,18 +12,8 @@ Read this reference when Build delegates a stage or a team delegates a specialis
 
 ## Models and host capacity
 
-Pass `model` and `effort setting` as separate delegation fields. Never create a combined pseudo-ID. Use the closest available pair and record a fallback.
 
-| Role | Model | Effort |
 | --- | --- | --- |
-| Build orchestrator | `host-selected model` | `xhigh` |
-| Brainstorm orchestrator / workers | `host-selected model` / `host-selected model` | `high` / `medium` |
-| Blue orchestrator | `host-selected model` | `xhigh` |
-| Blue specialist | `host-selected model` | `medium` risky; `low` bounded |
-| Red orchestrator | `host-selected model` | `xhigh` |
-| Red specialist | `host-selected model` | `xhigh` architecture/data; `high` UI/tests |
-| Red final validator | `host-selected model` | `high` |
-| Fixer Planner / Builder / Adversary / Judge | `host-selected model` / `host-selected model` / `host-selected model` / `host-selected model` | `high` / `medium` / `medium` / `medium` |
 
 Respect host concurrency and reserve one slot for each waiting orchestrator. Reduce parallelism, never required gates. Build runs Brainstorm, seed tests, Blue, exactly one scope-bound Red pass, at most one Fixer/Judge pass when eligible findings exist, and integration. Standalone Red/Fixer invocations retain their deep workflows.
 
@@ -171,11 +161,7 @@ Use `build-status.mjs` as the only dashboard normalizer. Team, agent, task, and 
 After changing this suite, run:
 
 ```bash
-node --test build/scripts/build-status.test.mjs
 node --test build/scripts/build-handoff.test.mjs
-node build/scripts/check-build-suite.mjs <suite-root>
-npm test --prefix build/assets/dashboard
-npm run build --prefix build/assets/dashboard
 python3 <skill-creator>/scripts/quick_validate.py <each-skill>
 python3 <skill-check>/scripts/check_skill.py --strict <each-skill>
 ```

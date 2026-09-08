@@ -11,11 +11,10 @@ When invoked by `/build`, read [references/orchestration-contract.md](references
 
 ## Setup and team
 
-Use a `host-selected model` / `xhigh` orchestrator. Use Terra/medium specialists for cross-module, state, API, data, UI, accessibility, or risky changes; use Terra/low for bounded mechanical, test, or documentation work. Record the nearest available fallback.
 
 Inspect applicable `AGENTS.md`, repository state, validation commands, and referenced artifacts. Require a clean source worktree. Resolve only implementation-blocking ambiguities; ask the user in batches of at most three and persist decisions in the candidate manifest.
 
-Create `blue-team/<run-id>-integration` and one branch/worktree per independent domain. Start every specialist with `fork_turns: "none"` and a prompt containing only its worktree, bounded goal, allowed files, interfaces, criterion IDs, required checks, and manifest/log paths. Never parallelize overlapping edits; sequence shared-interface work.
+Create `blue-team/<run-id>-integration` and one branch/worktree per independent domain. Start every specialist with `fresh-context isolation: "none"` and a prompt containing only its worktree, bounded goal, allowed files, interfaces, criterion IDs, required checks, and manifest/log paths. Never parallelize overlapping edits; sequence shared-interface work.
 
 ## Implement and integrate
 

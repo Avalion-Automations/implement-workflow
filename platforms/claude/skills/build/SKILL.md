@@ -7,11 +7,9 @@ description: Run an approval-gated or bounded-unattended feature workflow with t
 
 Deliver a reviewed integration branch while keeping planning, execution, and merge authority separate. Never merge to a protected user branch without explicit current approval.
 
-Read [references/orchestration-contract.md](references/orchestration-contract.md) and [references/status-protocol.md](references/status-protocol.md). Use `scripts/build-handoff.mjs` for manifests, ledger, approvals, receipts, and reporting.
 
 ## Source and run setup
 
-Use `model: "host-selected model"` and `effort setting: "xhigh"` when available. Inspect `AGENTS.md`, repository state, and validation commands. Require a clean source worktree.
 
 Before Git mutation, run `scripts/worktree-root.mjs resolve --run <run-id>`. It preflights `BASICS_WORKTREE_ROOT` or the platform temporary fallback. `build-handoff.mjs init` records its absolute paths; every child lane inherits them.
 
@@ -31,7 +29,7 @@ All workflow commits must follow [/feat-commit-no-scope](../feat-commit-no-scope
 Inspect the staged diff and validate a scope-free `type: concrete outcome` subject:
 
 ```bash
-node <plugin>/skills/feat-commit-no-scope/scripts/validate_commit_subject.js \
+node ./skills/feat-commit-no-scope/scripts/validate_commit_subject.js \
   "type: concrete outcome"
 ```
 
@@ -61,17 +59,14 @@ and [/hypothesis-evaluation](../hypothesis-evaluation/SKILL.md), in
 that order. Record a limitation rather than claiming an unsupported skill ran.
 
 Before Brainstorm, initialize the ledger with the commands in the
-[status protocol](references/status-protocol.md#commands), then initialize
-`build-handoff.mjs`. Use the locked [assets/dashboard](assets/dashboard/)
 source. Disclose browser or telemetry failure without weakening gates.
 
 ## Fast workflow and time gate
 
-Run stages serially. Every team orchestration and specialist delegation must start with `fork_turns: "none"` and only the bounded artifact paths required by the shared contract.
+Run stages serially. Every team orchestration and specialist delegation must start with `fresh-context isolation: "none"` and only the bounded artifact paths required by the shared contract.
 
 Aim to finish within 30 minutes. Before every team or specialist launch, run `build-handoff.mjs time-budget`. At `target-exceeded`, stop expanding investigation and defer non-blocking findings. At `hard-stop` (45 minutes), launch no new agents: finish only an already-running deterministic check, then deliver the best preserved candidate as blocked if an approved criterion remains unresolved. Only explicit user direction may extend the run.
 
-1. **Brainstorm and authorization preflight.** Invoke `/brainstorm` in the integration worktree. Route existing behavior through regression-readiness and behavioral-baseline checks. Use two independent Terra/medium workers with the Sol/xhigh Build orchestrator. Store the plan plus `plan.json` and `authorizations.json`; validate both manifests. From explicit intent, choose `interactive` or `bounded-unattended`. For unattended execution, preflight failure branches, capped retries, derived values, required sandbox/network grants, costs, and stops. Do not begin later stages with unresolved authorization.
 2. **Consolidated approval and unattended arming.** Present plan, scope, authorization inventory, and mode once. Bind their hashes with `build-handoff.mjs approve --authorizations <authorization-manifest>`. Before declaring unattended readiness, acquire all separately enforced, scoped host capabilities; authorization never bypasses the sandbox. Within approved triggers, validations, targets, consequences, bounds, and attempts, run listed primary, recovery, and derived operations without re-prompting. Record evidence without rewriting the manifest. Listed fallbacks and deterministic substitutions remain approved. Stop for envelope violations, integrity failure, exhausted bounds, unapproved information loss, material scope decisions, or protected-branch merges. Check approval and applicable operation IDs before seeding, external mutation groups, integration, and readiness reporting.
 3. **Seed tests.** Use `/bug-validation-and-regression` to translate each observable criterion into the smallest failing automated test; retain manual/legal/visual/external criteria as explicit checks. Do not modify product code or weaken tests. Commit the plan and tests, record exact failures in `seed.json`, and hand off its path.
 4. **Blue Team.** Invoke `/blue-team` from the seeded commit. It owns isolated specialist worktrees, explicitly uses `/bug-validation-and-regression` and `/run` where applicable, and returns `blue.json`, its candidate branch/commit, and validation artifacts. Do not let Blue workers edit the Build integration worktree.

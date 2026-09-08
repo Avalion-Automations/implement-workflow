@@ -45,14 +45,9 @@ Bind resolved decisions as constraints in the Planner handoff and preserve the l
 
 ## Roles
 
-| Role | Model / effort | Writes | Contract |
 | --- | --- | --- | --- |
-| Planner | `host-selected model` / `high` | tests, plan receipt | Prove one reported behavior with the smallest faithful failing test |
-| Builder | `host-selected model` / `medium` | product/test support | Make all current finding tests green with the smallest fix |
-| Adversary | `host-selected model` / `medium` | none | Try to disprove the fix with concrete code evidence |
-| Judge | `host-selected model` / `medium` | tests, decision receipt | Verify critiques and decide handoff eligibility |
 
-Start each role with `fork_turns: "none"` and only the finding manifest/receipt, target SHA/worktree or snapshot, allowed scope, and exact checks. Reuse a role only within the current finding; start fresh role agents for the next finding. Record nearest available model/effort fallback.
+Start each role with `fresh-context isolation: "none"` and only the finding manifest/receipt, target SHA/worktree or snapshot, allowed scope, and exact checks. Reuse a role only within the current finding; start fresh role agents for the next finding. Record nearest available model/effort fallback.
 
 ## Build mode
 

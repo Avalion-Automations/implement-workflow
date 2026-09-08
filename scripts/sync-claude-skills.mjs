@@ -36,11 +36,10 @@ function omit(path) {
 }
 
 function adapt(content) {
-  return content
+  const adapted = content
     .replaceAll("\r\n", "\n")
     .replaceAll("$basics:", "/")
-    .replaceAll("gpt-5.6-sol", "host-selected model")
-    .replaceAll("gpt-5.6-terra", "host-selected model")
+    .replaceAll(/gpt-[a-z0-9.-]+/gi, "session configuration")
     .replaceAll("reasoning_effort", "effort setting")
     .replaceAll("openai.yaml", "host-ui-metadata.yaml")
     .replaceAll("SubagentStart", "host lifecycle start")
@@ -49,7 +48,23 @@ function adapt(content) {
     .replaceAll("PostToolUse", "host tool completion")
     .replaceAll("Codex defaults to `<user-home>/.codex`; ", "")
     .replaceAll("Codex's normal plugin update", "the host's normal plugin update")
-    .replaceAll("Codex JSON event", "host event");
+    .replaceAll("Codex JSON event", "host event")
+    .replaceAll("fork_turns", "fresh-context isolation")
+    .replaceAll("<plugin>", ".")
+    .replaceAll("Terra", "host")
+    .replaceAll("Sol", "host")
+    .replaceAll("| Role | Model", "| Role | Guidance");
+
+  // Lifecycle telemetry and its dashboard are intentionally absent from this
+  // adapter. Remove instructions that would make those omitted resources an
+  // operational dependency rather than leaving a dangling command or link.
+  return adapted.split("\n").filter((line) => !(
+    /references\/status-protocol\.md|scripts\/build-status(?:\.test)?\.mjs|scripts\/check-build-suite\.mjs|assets\/dashboard/i.test(line)
+    // Claude Code supplies model and effort choices through its session. Drop
+    // Codex role-selection tables and directives instead of relabeling them.
+    || /session configuration|effort setting|\bhost\/(?:xhigh|high|medium|low)\b/i.test(line)
+    || /^\|\s*Role\s*\|.*(?:Model|Guidance).*effort/i.test(line)
+  )).join("\n");
 }
 
 function expectedFiles() {

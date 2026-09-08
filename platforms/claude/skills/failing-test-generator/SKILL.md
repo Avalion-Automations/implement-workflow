@@ -25,7 +25,6 @@ Create `docs/test-seeds/<run-id>-contract.md` unless the repository has an equiv
 
 ## Delegated test seeding
 
-Act as the orchestrator using `model: "host-selected model"` with `effort setting: "medium"`. Launch variable, domain-specific workers using `model: "host-selected model"` with `effort setting: "high"`; set `fork_turns: "none"` and give each only the contract, relevant source/test paths, test command, and owned output paths.
 
 Select only the workers the confirmed contract needs:
 

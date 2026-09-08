@@ -11,12 +11,9 @@ Create a decision-ready plan without implementing the requested work. Treat the 
 
 Use this fixed role structure:
 
-| Role | Model | Effort | Scope |
 | --- | --- | --- | --- |
-| Orchestrator | `host-selected model` | `high` | Reconcile evidence, ask the user, write the plan |
-| 2–3 workers | `host-selected model` | `medium` | Independent read-only assumption/risk lenses |
 
-Use two workers for a bounded request and three for cross-cutting or high-risk work. Start every worker with `fork_turns: "none"`; pass only the request, source paths, lens, and output contract. Workers return a compact table and never patches, mutations, or user questions. Keep one host slot for the orchestrator; when capacity is tight, run workers sequentially rather than reducing the role count.
+Use two workers for a bounded request and three for cross-cutting or high-risk work. Start every worker with `fresh-context isolation: "none"`; pass only the request, source paths, lens, and output contract. Workers return a compact table and never patches, mutations, or user questions. Keep one host slot for the orchestrator; when capacity is tight, run workers sequentially rather than reducing the role count.
 
 When invoked by `/build`, first read [references/orchestration-contract.md](references/orchestration-contract.md). Use its manifest paths, budget warnings, fresh-context receipt, model fallback, and status rules. Otherwise do not create Build telemetry or artifacts.
 

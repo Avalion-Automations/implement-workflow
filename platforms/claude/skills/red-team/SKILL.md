@@ -15,7 +15,6 @@ Resolve the requested commit, record source `git status --short` and `git diff -
 
 ## Team and evidence
 
-Use a Terra/xhigh orchestrator. Select non-overlapping relevant domains: architecture/control flow/concurrency and data/API/security/error handling use Terra/xhigh; UI/accessibility/client correctness and tests/boundaries/observability use Terra/high. Start every specialist with `fork_turns: "none"` and only the snapshot, commit, scope, criteria, no-write rule, and output path. Record nearest available fallbacks.
 
 Every specialist must follow
 [/bug-finding-review](../bug-finding-review/SKILL.md), selecting
@@ -24,7 +23,6 @@ than a generic checklist.
 
 Each specialist returns a compact findings table with stable `RT-<domain>-<number>` IDs, status (`confirmed`, `suspected`, `needs-context`, `not-reproducible`), confidence, concrete `path:line` evidence, impact, and observable verification. Omit unsupported concerns.
 
-Start a separate Sol/high final validator with `fork_turns: "none"`. Give it the same snapshot plus specialist artifact paths, not the parent conversation. It must reread cited evidence, deduplicate, reject unsupported/style-only claims, and set `repairDisposition` to `eligible`, `deferred`, `needs-context`, or `rejected`. It remains read-only and does not run tests.
 
 ## Build mode
 

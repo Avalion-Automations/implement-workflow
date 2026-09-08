@@ -2,9 +2,8 @@
 
 ## Roles
 
-The Sol/medium orchestrator owns repository inspection, contract synthesis, clarification, worktree/branch creation, worker selection, integration, validation, commits, tracking, and final report. Terra/high workers own only their assigned test design and test files.
 
-Never launch a worker before the contract is confirmed. Use fresh context (`fork_turns: "none"`) and pass only task-local material:
+Never launch a worker before the contract is confirmed. Use fresh context (`fresh-context isolation: "none"`) and pass only task-local material:
 
 - contract criteria and explicit non-goals;
 - source and existing-test paths needed for the assignment;
