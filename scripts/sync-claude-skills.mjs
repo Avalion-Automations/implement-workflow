@@ -59,7 +59,7 @@ function adapt(content) {
   // adapter. Remove instructions that would make those omitted resources an
   // operational dependency rather than leaving a dangling command or link.
   return adapted.split("\n").filter((line) => !(
-    /references\/status-protocol\.md|scripts\/build-status(?:\.test)?\.mjs|scripts\/check-build-suite\.mjs|assets\/dashboard/i.test(line)
+    /references\/status-protocol\.md|(?:scripts\/)?build-status(?:\.test)?\.mjs|scripts\/check-build-suite\.mjs|assets\/dashboard/i.test(line)
     // Claude Code supplies model and effort choices through its session. Drop
     // Codex role-selection tables and directives instead of relabeling them.
     || /session configuration|effort setting|\bhost\/(?:xhigh|high|medium|low)\b/i.test(line)

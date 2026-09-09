@@ -154,7 +154,6 @@ Run `build-handoff.mjs budget`. On warning, move detail to an artifact/log and s
 
 ## Status telemetry
 
-Use `build-status.mjs` as the only dashboard normalizer. Team, agent, task, and run commands each emit their own event; do not add duplicate generic before/after events. Use generic `event` only for approvals, validations, merges, and telemetry gaps. Register intended agents as queued before launch and mark active only after the host confirms start. Mark every invoked role terminal; use `not-required` for intentionally skipped roles. Telemetry failure is disclosed and never changes source or release safety.
 
 ## Required suite validation
 
