@@ -9,26 +9,26 @@ Repair evidence-backed findings through exactly four sequential roles. Never inf
 
 The primary Fixer agent is the orchestrator. It owns input and decision gates, workspace control, role handoffs, receipts, and completion; Planner, Builder, Adversary, and Judge remain the four sequential repair roles.
 
-Read [references/exception-routing.md](references/exception-routing.md). When invoked by `/build`, also read [references/orchestration-contract.md](references/orchestration-contract.md) and use its manifests, fresh-context receipts, model fallbacks, budget warnings, and telemetry rules.
+Read [references/exception-routing.md](references/exception-routing.md). When invoked by `/basics:build`, also read [references/orchestration-contract.md](references/orchestration-contract.md) and use its manifests, fresh-context receipts, model fallbacks, budget warnings, and telemetry rules.
 
 ## Input and workspace gate
 
-Accept only a validated Red manifest/report with a reviewed commit and, per repairable entry: unique `RT-<domain>-<number>` ID, `path:line` evidence, meaningful impact, observable verification, and `repairDisposition: eligible`. Stop before delegation on missing or vague input; request a corrected report or [/bug-list-generator](../bug-list-generator/SKILL.md). Preserve `needs-context`, `not-reproducible`, and rejected entries without implementation.
+Accept only a validated Red manifest/report with a reviewed commit and, per repairable entry: unique `RT-<domain>-<number>` ID, `path:line` evidence, meaningful impact, observable verification, and `repairDisposition: eligible`. Stop before delegation on missing or vague input; request a corrected report or [/basics:bug-list-generator](../bug-list-generator/SKILL.md). Preserve `needs-context`, `not-reproducible`, and rejected entries without implementation.
 
 Confirm repository/commit identity, applicable `AGENTS.md`, clean source state, baseline commands, and cited files. Create `fixer-team/<run-id>-integration` from the reviewed commit. Planner, Builder, and Judge use this controlled worktree sequentially; Adversary receives a read-only snapshot. Record baseline failures separately. Never force-push, reset, or overwrite user work.
 
 ## Named diagnostic and validation chain
 
 When the cited report does not already isolate a reproducible mechanism,
-invoke these individual skills in order: [/debugging-evidence-capture](../debugging-evidence-capture/SKILL.md),
-[/hypothesis-formulation](../hypothesis-formulation/SKILL.md),
-[/hypothesis-instrumentation](../hypothesis-instrumentation/SKILL.md),
-and [/hypothesis-evaluation](../hypothesis-evaluation/SKILL.md).
+invoke these individual skills in order: [/basics:debugging-evidence-capture](../debugging-evidence-capture/SKILL.md),
+[/basics:hypothesis-formulation](../hypothesis-formulation/SKILL.md),
+[/basics:hypothesis-instrumentation](../hypothesis-instrumentation/SKILL.md),
+and [/basics:hypothesis-evaluation](../hypothesis-evaluation/SKILL.md).
 Use only minimally scoped probes permitted by the repository rules, preserve
 their evidence in the receipt, and remove temporary diagnostics before final
 delivery. Do not add instrumentation when a minimal failing regression already
 isolates the defect. For every repair, invoke
-[/bug-validation-and-regression](../bug-validation-and-regression/SKILL.md)
+[/basics:bug-validation-and-regression](../bug-validation-and-regression/SKILL.md)
 to create the faithful regression and prove the repaired behavior.
 
 ## Standalone bug-list decision gate
@@ -41,7 +41,7 @@ Escalate a decision to the user when two or more materially different externally
 
 Batch every currently known unresolved user-owned decision through the question tool, at most three questions per call. Each question includes a recommendation and concrete alternatives with their tradeoffs. Stop and wait for the answers; then update the ledger and repeat only if unresolved user-owned decisions remain. If the question tool is unavailable, present the same compact ledger and questions in chat and stop. Start the workspace gate and four-role process only after every material ledger item is resolved, explicitly deferred, or evidenced irrelevant.
 
-Bind resolved decisions as constraints in the Planner handoff and preserve the ledger in the standalone repair receipts. If an answer changes expected behavior, verification, or scope beyond the reviewed finding, do not stretch the report: mark the affected finding `needs-context` and request a new or corrected [/bug-list-generator](../bug-list-generator/SKILL.md) report.
+Bind resolved decisions as constraints in the Planner handoff and preserve the ledger in the standalone repair receipts. If an answer changes expected behavior, verification, or scope beyond the reviewed finding, do not stretch the report: mark the affected finding `needs-context` and request a new or corrected [/basics:bug-list-generator](../bug-list-generator/SKILL.md) report.
 
 ## Roles
 
@@ -58,7 +58,7 @@ When Build invokes Fixer, accept only `eligible` findings from `red-1.json`; eac
 3. Adversary reviews only the approved criteria, eligible IDs, and repair diff. Record new outside-scope observations as deferred; do not expand the batch.
 4. Judge is Build's post-fix assurance gate. It verifies the same bounded surface and accepts or blocks the candidate. Do not return to Builder or launch another Red/Fixer round automatically.
 
-Write every eligible ID to `fixer-1.json` with `result: fixed|not-reproducible|needs-context|blocked`. Any result other than `fixed` blocks Build readiness but preserves the best candidate for explicit standalone deep work. Standalone `/fixer-team` retains the iterative per-finding loop below.
+Write every eligible ID to `fixer-1.json` with `result: fixed|not-reproducible|needs-context|blocked`. Any result other than `fixed` blocks Build readiness but preserves the best candidate for explicit standalone deep work. Standalone `/basics:fixer-team` retains the iterative per-finding loop below.
 
 ## Standalone per-finding loop
 

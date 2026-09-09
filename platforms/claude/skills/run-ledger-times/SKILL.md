@@ -16,7 +16,7 @@ node scripts/run-ledger-times.mjs [--ledger PATH] [--root PATH] [--now ISO] [--t
 
 - Repeat `--ledger` for known files or `--root` for bounded discovery below a
   run archive. With no arguments, the script checks `BASICS_RUNS_DIR`,
-  `~/.codex/build-runs`, and `./.codex/build-runs` when they exist.
+  `~/.claude/build-runs`, and `./.claude/build-runs` when they exist.
 - Use `--now` only for reproducible checks or historical reporting.
 - Use an IANA timezone such as `America/Santo_Domingo`; the default is the
   host timezone.

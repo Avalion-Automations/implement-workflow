@@ -38,7 +38,12 @@ function omit(path) {
 function adapt(content) {
   const adapted = content
     .replaceAll("\r\n", "\n")
-    .replaceAll("$basics:", "/")
+    .replaceAll("$basics:", "/basics:")
+    .replaceAll("$HOME/.agents/skills/ahk-no-shadow/run_no_shadowing.sh", "<ahk-no-shadow-root>/run_no_shadowing.sh")
+    .replaceAll(" For a Codex package, run `--strict` against the generated skill directory after metadata injection.", "")
+    .replaceAll("Run both checks against the requested skill directory:", "Run the bundled check against the requested skill directory:")
+    .replaceAll(".codex", ".claude")
+    .replaceAll("Codex", "Claude Code")
     .replaceAll(/gpt-[a-z0-9.-]+/gi, "session configuration")
     .replaceAll("reasoning_effort", "effort setting")
     .replaceAll("openai.yaml", "host-ui-metadata.yaml")
@@ -46,9 +51,8 @@ function adapt(content) {
     .replaceAll("SubagentStop", "host lifecycle stop")
     .replaceAll("PreToolUse", "host tool preflight")
     .replaceAll("PostToolUse", "host tool completion")
-    .replaceAll("Codex defaults to `<user-home>/.codex`; ", "")
-    .replaceAll("Codex's normal plugin update", "the host's normal plugin update")
-    .replaceAll("Codex JSON event", "host event")
+    .replaceAll("Claude Code's normal plugin update", "the host's normal plugin update")
+    .replaceAll("Claude Code JSON event", "host event")
     .replaceAll("fork_turns", "fresh-context isolation")
     .replaceAll("<plugin>", ".")
     .replaceAll("Terra", "host")
@@ -59,7 +63,7 @@ function adapt(content) {
   // adapter. Remove instructions that would make those omitted resources an
   // operational dependency rather than leaving a dangling command or link.
   return adapted.split("\n").filter((line) => !(
-    /references\/status-protocol\.md|(?:scripts\/)?build-status(?:\.test)?\.mjs|scripts\/check-build-suite\.mjs|assets\/dashboard/i.test(line)
+    /references\/status-protocol\.md|(?:scripts\/)?build-status(?:\.test)?\.mjs|scripts\/check-build-suite\.mjs|assets\/dashboard|quick_validate\.py/i.test(line)
     // Claude Code supplies model and effort choices through its session. Drop
     // Codex role-selection tables and directives instead of relabeling them.
     || /session configuration|effort setting|\bhost\/(?:xhigh|high|medium|low)\b/i.test(line)

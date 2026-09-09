@@ -70,3 +70,14 @@ node scripts/sync-claude-skills.mjs --check
 See `platforms/claude/README.md` for the local-plugin layout, invocation, and
 host-capability fallbacks. The adapter does not install, configure, or
 authenticate Claude Code.
+
+After cloning or downloading this repository, install the Claude adapter from
+inside Claude Code:
+
+```text
+/plugin marketplace add /absolute/path/to/agent-workflows
+/plugin install basics@agent-workflows
+```
+
+Then invoke workflows with Claude's plugin namespace, such as
+`/basics:build`.

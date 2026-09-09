@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Lint Codex skill structure and flag design-quality heuristics."""
+"""Lint Claude Code skill structure and flag design-quality heuristics."""
 
 from __future__ import annotations
 
@@ -201,7 +201,7 @@ class Checker:
         elif not 25 <= len(short_description.strip()) <= 64:
             self.add("warning", "short-description-length", "short_description should be 25–64 characters.")
         skill_name = self.frontmatter.get("name")
-        accepted_invocations = (f"${skill_name}", f"/{skill_name}")
+        accepted_invocations = (f"${skill_name}", f"/basics:{skill_name}")
         if not isinstance(default_prompt, str) or not any(invocation in default_prompt for invocation in accepted_invocations):
             self.add("warning", "default-prompt", "default_prompt should include the explicit skill invocation.")
 
@@ -220,7 +220,7 @@ def render(findings: list[Finding], as_json: bool) -> None:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Check Codex skill structure and design heuristics.")
+    parser = argparse.ArgumentParser(description="Check Claude Code skill structure and design heuristics.")
     parser.add_argument("skill_dir", type=Path)
     parser.add_argument("--strict", action="store_true", help="Fail on warnings as well as errors.")
     parser.add_argument("--json", action="store_true", help="Emit findings as JSON.")

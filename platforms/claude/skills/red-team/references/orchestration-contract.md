@@ -25,7 +25,7 @@ The approved plan, scope file, criterion IDs, and Blue changed paths are the Bui
 - Red records outside-scope, uncommon-environment, speculative-hardening, portability, and pre-existing observations as `repairDisposition: "deferred"`, with `scopeDisposition` and `deferReason`. They remain in the delivery report but do not block readiness or enter Fixer unless the user explicitly expands scope.
 - `needs-context` means an in-scope product decision prevents judging an approved criterion; it blocks readiness. Style-only or unsupported claims remain `rejected`.
 - Fixer handles all eligible IDs in one Planner/Builder/Adversary/Judge batch. Its Judge is the scoped post-fix gate. It may verify only the approved criteria, eligible IDs, repair diff, and relevant regressions; it defers new outside-scope observations. Build never launches a second Red or Fixer round automatically.
-- A single unresolved eligible ID blocks Build readiness and is handed to standalone `/fixer-team` or `/red-team` for optional deep work.
+- A single unresolved eligible ID blocks Build readiness and is handed to standalone `/basics:fixer-team` or `/basics:red-team` for optional deep work.
 
 ## Durable artifacts
 
@@ -161,7 +161,6 @@ After changing this suite, run:
 
 ```bash
 node --test build/scripts/build-handoff.test.mjs
-python3 <skill-creator>/scripts/quick_validate.py <each-skill>
 python3 <skill-check>/scripts/check_skill.py --strict <each-skill>
 ```
 

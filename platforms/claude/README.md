@@ -5,11 +5,24 @@ This is the Claude Code adapter for the canonical skills in
 `node scripts/sync-claude-skills.mjs` to create it, and use
 `node scripts/sync-claude-skills.mjs --check` to prove it is current.
 
-Install this local plugin with the Claude Code local-plugin workflow, selecting
-this `platforms/claude` directory. The plugin manifest is in
-`.claude-plugin/plugin.json`; the skills are then available by their skill
-names (for example, `/build`). No installation, authentication, or global
-configuration is performed by this repository.
+Test the downloaded plugin directly for one session:
+
+```bash
+claude --plugin-dir /absolute/path/to/agent-workflows/platforms/claude
+```
+
+For a persistent local installation, start Claude Code and add this repository
+as a marketplace, then install the plugin:
+
+```text
+/plugin marketplace add /absolute/path/to/agent-workflows
+/plugin install basics@agent-workflows
+```
+
+Plugin skills use Claude Code's native namespace. Invoke the Build workflow as
+`/basics:build`; the other skills follow `/basics:<skill-name>`. The plugin
+manifest is `.claude-plugin/plugin.json`. This repository does not install,
+authenticate, or globally configure Claude Code on its own.
 
 ## Capability contract
 

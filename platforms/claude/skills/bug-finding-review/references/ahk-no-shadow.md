@@ -25,7 +25,7 @@ These source files live under `scripts/` in this repo and are copied into the in
 Run from the repository root:
 
 ```bash
-$HOME/.agents/skills/ahk-no-shadow/run_no_shadowing.sh <path ...>
+<ahk-no-shadow-root>/run_no_shadowing.sh <path ...>
 ```
 
 If no path is passed, the runner scans the current directory.

@@ -12,7 +12,7 @@ from pathlib import Path
 
 
 PROTECTED_BRANCHES = frozenset({"devel", "main", "master"})
-DEFAULT_NOTES_DIR = Path.home() / ".codex" / "notes" / "work-cleanup"
+DEFAULT_NOTES_DIR = Path.home() / ".claude" / "notes" / "work-cleanup"
 ABSOLUTE_PATH = re.compile(r"`(/[^`\r\n]+)`|(?<![A-Za-z0-9_.-])(/[^\s`|)]+)")
 
 

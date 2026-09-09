@@ -118,7 +118,7 @@ export function main(tokens = process.argv.slice(2)) {
   const now = instant(options.now, "--now");
   try { new Intl.DateTimeFormat("en", { timeZone: options.timezone }); } catch { throw new Error(`invalid timezone: ${options.timezone}`); }
   if (!options.ledgers.length && !options.roots.length) {
-    options.roots.push(...[process.env.BASICS_RUNS_DIR, join(homedir(), ".codex", "build-runs"), resolve(".codex", "build-runs")].filter(Boolean));
+    options.roots.push(...[process.env.BASICS_RUNS_DIR, join(homedir(), ".claude", "build-runs"), resolve(".claude", "build-runs")].filter(Boolean));
   }
   const paths = [...new Set([...options.ledgers, ...options.roots.flatMap((root) => discover(root))])];
   const ledgers = [];

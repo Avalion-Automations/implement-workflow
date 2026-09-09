@@ -7,7 +7,7 @@ description: Orchestrate parallel, test-first implementation by isolated special
 
 Own clarification, decomposition, isolated implementation, integration, validation, and delivery. Do not delegate orchestrator decisions or merge into the user's branch.
 
-When invoked by `/build`, read [references/orchestration-contract.md](references/orchestration-contract.md) and accept the plan/seed manifest paths as authoritative. Apply its fresh-context, receipt, model fallback, budget, and telemetry rules.
+When invoked by `/basics:build`, read [references/orchestration-contract.md](references/orchestration-contract.md) and accept the plan/seed manifest paths as authoritative. Apply its fresh-context, receipt, model fallback, budget, and telemetry rules.
 
 ## Setup and team
 
@@ -19,12 +19,12 @@ Create `blue-team/<run-id>-integration` and one branch/worktree per independent 
 ## Implement and integrate
 
 Each specialist must use
-[/bug-validation-and-regression](../bug-validation-and-regression/SKILL.md)
+[/basics:bug-validation-and-regression](../bug-validation-and-regression/SKILL.md)
 to select the smallest faithful regression proof for its assigned criteria.
 Each specialist must inspect local code, implement a complete scoped change,
 preserve public contracts, avoid placeholders/test suppression, run scoped
 checks, commit, and write a compact receipt. When acceptance depends on a
-user-observable runtime flow, invoke [/run](../run/SKILL.md) to
+user-observable runtime flow, invoke [/basics:run](../run/SKILL.md) to
 observe that flow and record the result; do not claim runtime observation when
 it was not possible. The orchestrator reviews and merges accepted commits one
 at a time. Resolve mechanical conflicts only; escalate semantic conflicts.

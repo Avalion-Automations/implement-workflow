@@ -1,20 +1,19 @@
 ---
 name: skill-check
-description: Validate a Codex skill's structure, resource integrity, and design quality. Use when reviewing, linting, improving, or preparing a skill for use, especially for workflow clarity, progressive disclosure, deterministic scripts, and stale or broken resources.
+description: Validate a Claude Code skill's structure, resource integrity, and design quality. Use when reviewing, linting, improving, or preparing a skill for use, especially for workflow clarity, progressive disclosure, deterministic scripts, and stale or broken resources.
 ---
 
 # Skill Check
 
-Run both checks against the requested skill directory:
+Run the bundled check against the requested skill directory:
 
 ```bash
-python3 /home/raptorx/.codex/skills/.system/skill-creator/scripts/quick_validate.py <skill-dir>
 python3 <loaded-skill-check-root>/scripts/check_skill.py <skill-dir>
 ```
 
 Resolve `<loaded-skill-check-root>` to the directory containing this `SKILL.md`; do not substitute another globally installed `skill-check` copy. The bundled checker understands suite-level sibling links such as `../build/SKILL.md` while still rejecting arbitrary directory escapes.
 
-For a portable canonical suite, run the bundled checker without `--strict`: host-specific UI metadata may be injected only during packaging. For a Codex package, run `--strict` against the generated skill directory after metadata injection. Do not report canonical missing-UI-metadata warnings as package defects.
+For a portable canonical suite, run the bundled checker without `--strict`: host-specific UI metadata may be injected only during packaging. Do not report canonical missing-UI-metadata warnings as package defects.
 
 ## Review
 

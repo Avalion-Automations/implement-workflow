@@ -7,7 +7,7 @@ description: Run an adversarial, read-only software review with validated findin
 
 Review only. Never edit, generate, format, install, build, test, commit, merge, create branches, update worktrees, or write to the repository under review.
 
-When invoked by `/build`, read [references/orchestration-contract.md](references/orchestration-contract.md) and use its fresh-context, manifests, receipt, model fallback, budget, and telemetry rules.
+When invoked by `/basics:build`, read [references/orchestration-contract.md](references/orchestration-contract.md) and use its fresh-context, manifests, receipt, model fallback, budget, and telemetry rules.
 
 ## Immutable review
 
@@ -17,7 +17,7 @@ Resolve the requested commit, record source `git status --short` and `git diff -
 
 
 Every specialist must follow
-[/bug-finding-review](../bug-finding-review/SKILL.md), selecting
+[/basics:bug-finding-review](../bug-finding-review/SKILL.md), selecting
 only its relevant review lenses and returning evidence-backed findings rather
 than a generic checklist.
 
@@ -30,7 +30,7 @@ When Build invokes Red, perform exactly one review pass and treat the approved p
 
 The final validator marks a finding `eligible` only when it demonstrably fails an approved criterion or introduces a regression inside the approved change scope; include `scopeDisposition: "in-scope"` and the violated `criterionIds`. Record outside-scope, uncommon-environment, speculative-hardening, portability, and pre-existing observations as `deferred` with a concise `deferReason`. Deferred findings are still useful report items but do not enter Build’s Fixer pass. Use `needs-context` only when an in-scope decision prevents judging criterion success. Do not expand Build review merely because an unusual-but-possible invocation exists.
 
-Return one `red-1.json`. Build does not ask Red to re-review a Fixer candidate; Fixer’s scoped Judge is the post-repair gate. Standalone `/red-team` remains the deep, open-ended adversarial workflow.
+Return one `red-1.json`. Build does not ask Red to re-review a Fixer candidate; Fixer’s scoped Judge is the post-repair gate. Standalone `/basics:red-team` remains the deep, open-ended adversarial workflow.
 
 ## Handoff
 

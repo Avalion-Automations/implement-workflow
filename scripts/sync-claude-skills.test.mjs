@@ -65,6 +65,21 @@ test("Claude package excludes Codex-only runtime identifiers", () => {
   }
 });
 
+test("Claude package contains no owner-specific or Codex installation paths", () => {
+  const forbidden = [
+    [/\/home\//, "owner-specific home path"],
+    [/(?:^|[\/`])\.codex(?:[\/`]|$)/, "Codex state directory"],
+    [/\$HOME\/\.agents\//, "external agent installation path"],
+    [/quick_validate\.py/, "unbundled quick validator"]
+  ];
+  for (const file of files(adapter)) {
+    const content = readFileSync(file, "utf8");
+    for (const [pattern, label] of forbidden) {
+      assert.doesNotMatch(content, pattern, `${label} leaked into ${relative(adapter, file)}`);
+    }
+  }
+});
+
 test("Claude adapter documents model and capability fallbacks", () => {
   const contract = readFileSync(join(adapter, "README.md"), "utf8");
   for (const phrase of ["Model mapping", "Effort", "Fresh-context delegation", "Lifecycle hooks", "BASICS_RUNS_DIR"]) {
@@ -122,4 +137,33 @@ test("RT-FINAL-004: packaged portability guidance resolves its adapter contract"
 
 test("RT-FINAL-005: packaged commands contain no unresolved plugin-root placeholder", () => {
   assertPackageExcludes([[/<plugin>/, "unresolved plugin-root placeholder"]]);
+});
+
+test("Claude marketplace installs the adapter from the repository checkout", () => {
+  const marketplacePath = join(root, ".claude-plugin", "marketplace.json");
+  assert.ok(existsSync(marketplacePath), "missing repository Claude marketplace manifest");
+  const marketplace = JSON.parse(readFileSync(marketplacePath, "utf8"));
+  const plugin = JSON.parse(readFileSync(join(adapter, ".claude-plugin", "plugin.json"), "utf8"));
+  assert.equal(marketplace.name, "agent-workflows");
+  assert.equal(marketplace.owner?.name, "Jeff");
+  assert.deepEqual(
+    marketplace.plugins?.map(({ name, source, version }) => ({ name, source, version })),
+    [{ name: "basics", source: "./platforms/claude", version: plugin.version }]
+  );
+});
+
+test("Claude documentation uses native install and namespaced invocation commands", () => {
+  const contract = readFileSync(join(adapter, "README.md"), "utf8");
+  assert.match(contract, /claude --plugin-dir \/absolute\/path\/to\/agent-workflows\/platforms\/claude/);
+  assert.match(contract, /\/plugin marketplace add \/absolute\/path\/to\/agent-workflows/);
+  assert.match(contract, /\/plugin install basics@agent-workflows/);
+  assert.match(contract, /\/basics:build/);
+  assert.doesNotMatch(contract, /example, `\/build`/);
+});
+
+test("packaged cross-skill invocations retain the Claude plugin namespace", () => {
+  assertPackageExcludes([
+    [/(^|[\s`(])\/(?:build|brainstorm|blue-team|red-team|fixer-team|verify|run|bug-validation-and-regression)(?=[\s`),.]|$)/m, "unnamespaced cross-skill invocation"]
+  ]);
+  assert.match(readFileSync(join(packaged, "build", "SKILL.md"), "utf8"), /\/basics:red-team/);
 });

@@ -4,9 +4,9 @@ Use this table when the standard one-finding repair loop cannot continue normall
 
 | Condition | Required state and action |
 | --- | --- |
-| Report lacks a reviewed commit, a unique `RT-<domain>-<number>` ID, `path:line` evidence, impact, or an observable verification | Stop before delegation. Ask for a corrected report or route the user to [/bug-list-generator](../../bug-list-generator/SKILL.md). |
+| Report lacks a reviewed commit, a unique `RT-<domain>-<number>` ID, `path:line` evidence, impact, or an observable verification | Stop before delegation. Ask for a corrected report or route the user to [/basics:bug-list-generator](../../bug-list-generator/SKILL.md). |
 | A standalone report from `bug-list-generator` has unresolved product, design, architecture, scope, compatibility, or risk choices | Before workspace mutation or delegation, add them to the decision ledger and batch the user-owned decisions through the question tool. Continue only after every material item is resolved, deferred, or irrelevant. |
-| A decision-gate answer changes expected behavior, verification, or scope beyond the reviewed finding | Mark the finding `needs-context`. Request a new or corrected [/bug-list-generator](../../bug-list-generator/SKILL.md) report instead of expanding the repair implicitly. |
+| A decision-gate answer changes expected behavior, verification, or scope beyond the reviewed finding | Mark the finding `needs-context`. Request a new or corrected [/basics:bug-list-generator](../../bug-list-generator/SKILL.md) report instead of expanding the repair implicitly. |
 | Entry is `needs-context` or `not-reproducible` | Do not send it to the builder. Preserve its evidence in the final handoff. |
 | Planner's faithful regression test still passes | Mark the finding `not-reproducible`, retain the evidence, and do not propose a speculative fix. |
 | Planner or builder needs a product decision, wider API change, or data migration | Mark the finding `needs-context`, stop that task, and request the necessary user decision. |

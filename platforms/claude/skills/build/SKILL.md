@@ -18,14 +18,14 @@ Create only after checking that the recorded path and branch do not exist:
 ```text
 <worktree-root>/build-runs/<run-id>/integration
 branch: build/<run-id>-integration
-archive: <state-root>/build-runs/<run-slug>/status (set `BASICS_RUNS_DIR` to override)
+archive: <state-root>/build-runs/<run-slug>/status (Claude Code defaults to `<user-home>/.claude`; set `BASICS_RUNS_DIR` to override)
 ```
 
 Preserve the integration worktree and branch. Never force-push, reset, implicitly stash, or merge into the base branch.
 
 ## Commit-subject policy
 
-All workflow commits must follow [/feat-commit-no-scope](../feat-commit-no-scope/SKILL.md).
+All workflow commits must follow [/basics:feat-commit-no-scope](../feat-commit-no-scope/SKILL.md).
 Inspect the staged diff and validate a scope-free `type: concrete outcome` subject:
 
 ```bash
@@ -38,24 +38,24 @@ Use `chore: merge <concrete description>` for merge commits. Never use a scope o
 ## Explicit skill routing
 
 Do not infer or substitute workflow methods. Build invokes
-[/brainstorm](../brainstorm/SKILL.md),
-[/bug-validation-and-regression](../bug-validation-and-regression/SKILL.md),
-[/blue-team](../blue-team/SKILL.md),
-[/red-team](../red-team/SKILL.md),
-[/fixer-team](../fixer-team/SKILL.md), and
-[/verify](../verify/SKILL.md) at their named stages. Every commit
-uses [/feat-commit-no-scope](../feat-commit-no-scope/SKILL.md).
+[/basics:brainstorm](../brainstorm/SKILL.md),
+[/basics:bug-validation-and-regression](../bug-validation-and-regression/SKILL.md),
+[/basics:blue-team](../blue-team/SKILL.md),
+[/basics:red-team](../red-team/SKILL.md),
+[/basics:fixer-team](../fixer-team/SKILL.md), and
+[/basics:verify](../verify/SKILL.md) at their named stages. Every commit
+uses [/basics:feat-commit-no-scope](../feat-commit-no-scope/SKILL.md).
 
 Their explicit delegated routes are: Brainstorm conditionally uses
-[/audit-regression-readiness](../audit-regression-readiness/SKILL.md)
-and [/capture-behavioral-baseline](../capture-behavioral-baseline/SKILL.md);
-Blue uses [/run](../run/SKILL.md); Red uses
-[/bug-finding-review](../bug-finding-review/SKILL.md); and Fixer,
+[/basics:audit-regression-readiness](../audit-regression-readiness/SKILL.md)
+and [/basics:capture-behavioral-baseline](../capture-behavioral-baseline/SKILL.md);
+Blue uses [/basics:run](../run/SKILL.md); Red uses
+[/basics:bug-finding-review](../bug-finding-review/SKILL.md); and Fixer,
 when the finding is not already reproducibly isolated, uses
-[/debugging-evidence-capture](../debugging-evidence-capture/SKILL.md),
-[/hypothesis-formulation](../hypothesis-formulation/SKILL.md),
-[/hypothesis-instrumentation](../hypothesis-instrumentation/SKILL.md),
-and [/hypothesis-evaluation](../hypothesis-evaluation/SKILL.md), in
+[/basics:debugging-evidence-capture](../debugging-evidence-capture/SKILL.md),
+[/basics:hypothesis-formulation](../hypothesis-formulation/SKILL.md),
+[/basics:hypothesis-instrumentation](../hypothesis-instrumentation/SKILL.md),
+and [/basics:hypothesis-evaluation](../hypothesis-evaluation/SKILL.md), in
 that order. Record a limitation rather than claiming an unsupported skill ran.
 
 Before Brainstorm, initialize the ledger with the commands in the
@@ -68,11 +68,11 @@ Run stages serially. Every team orchestration and specialist delegation must sta
 Aim to finish within 30 minutes. Before every team or specialist launch, run `build-handoff.mjs time-budget`. At `target-exceeded`, stop expanding investigation and defer non-blocking findings. At `hard-stop` (45 minutes), launch no new agents: finish only an already-running deterministic check, then deliver the best preserved candidate as blocked if an approved criterion remains unresolved. Only explicit user direction may extend the run.
 
 2. **Consolidated approval and unattended arming.** Present plan, scope, authorization inventory, and mode once. Bind their hashes with `build-handoff.mjs approve --authorizations <authorization-manifest>`. Before declaring unattended readiness, acquire all separately enforced, scoped host capabilities; authorization never bypasses the sandbox. Within approved triggers, validations, targets, consequences, bounds, and attempts, run listed primary, recovery, and derived operations without re-prompting. Record evidence without rewriting the manifest. Listed fallbacks and deterministic substitutions remain approved. Stop for envelope violations, integrity failure, exhausted bounds, unapproved information loss, material scope decisions, or protected-branch merges. Check approval and applicable operation IDs before seeding, external mutation groups, integration, and readiness reporting.
-3. **Seed tests.** Use `/bug-validation-and-regression` to translate each observable criterion into the smallest failing automated test; retain manual/legal/visual/external criteria as explicit checks. Do not modify product code or weaken tests. Commit the plan and tests, record exact failures in `seed.json`, and hand off its path.
-4. **Blue Team.** Invoke `/blue-team` from the seeded commit. It owns isolated specialist worktrees, explicitly uses `/bug-validation-and-regression` and `/run` where applicable, and returns `blue.json`, its candidate branch/commit, and validation artifacts. Do not let Blue workers edit the Build integration worktree.
-5. **One scoped Red Team pass.** Invoke `/red-team` once against the immutable Blue candidate with the approved plan, scope, criteria, and changed paths. Eligible findings must demonstrate and cite an approved-criterion failure or in-scope regression. Record all other findings as visible `deferred` items; they neither enter Fixer nor block readiness. Use `needs-context` only for an in-scope decision that prevents judging a criterion.
-6. **At most one scoped Fixer/Judge pass.** If Red has eligible findings, invoke `/fixer-team` once for the complete set. Its Planner, Builder, Adversary, and Judge are one batch; the Judge assesses only approved criteria, repaired IDs, repair diff, and relevant regression suite. Defer new outside-scope observations and launch no further Red/Fixer round. An unresolved approved criterion blocks readiness and is preserved for explicit standalone Fixer/Red work. With no eligible findings, record `fixer-1.json` as `not-required`.
-7. **Integrate.** Merge the Blue commit when Fixer is not required, otherwise the Fixer commit accepted by its scoped Judge. Resolve mechanical conflicts only; ask about semantic conflicts. Invoke `/verify` for the complete applicable proof, run the complete relevant suite, and record the final SHA. Do not perform a second Red pass inside Build.
+3. **Seed tests.** Use `/basics:bug-validation-and-regression` to translate each observable criterion into the smallest failing automated test; retain manual/legal/visual/external criteria as explicit checks. Do not modify product code or weaken tests. Commit the plan and tests, record exact failures in `seed.json`, and hand off its path.
+4. **Blue Team.** Invoke `/basics:blue-team` from the seeded commit. It owns isolated specialist worktrees, explicitly uses `/basics:bug-validation-and-regression` and `/basics:run` where applicable, and returns `blue.json`, its candidate branch/commit, and validation artifacts. Do not let Blue workers edit the Build integration worktree.
+5. **One scoped Red Team pass.** Invoke `/basics:red-team` once against the immutable Blue candidate with the approved plan, scope, criteria, and changed paths. Eligible findings must demonstrate and cite an approved-criterion failure or in-scope regression. Record all other findings as visible `deferred` items; they neither enter Fixer nor block readiness. Use `needs-context` only for an in-scope decision that prevents judging a criterion.
+6. **At most one scoped Fixer/Judge pass.** If Red has eligible findings, invoke `/basics:fixer-team` once for the complete set. Its Planner, Builder, Adversary, and Judge are one batch; the Judge assesses only approved criteria, repaired IDs, repair diff, and relevant regression suite. Defer new outside-scope observations and launch no further Red/Fixer round. An unresolved approved criterion blocks readiness and is preserved for explicit standalone Fixer/Red work. With no eligible findings, record `fixer-1.json` as `not-required`.
+7. **Integrate.** Merge the Blue commit when Fixer is not required, otherwise the Fixer commit accepted by its scoped Judge. Resolve mechanical conflicts only; ask about semantic conflicts. Invoke `/basics:verify` for the complete applicable proof, run the complete relevant suite, and record the final SHA. Do not perform a second Red pass inside Build.
 
 Progress follows stage milestones. Add generic events only for approvals, validation, merges, and telemetry gaps.
 
