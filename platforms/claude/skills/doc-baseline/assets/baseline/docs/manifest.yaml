@@ -1,0 +1,6 @@
+{
+  "schemaVersion": 1,
+  "requiredTopics": [
+    {{TOPIC_ENTRIES}}
+  ]
+}
