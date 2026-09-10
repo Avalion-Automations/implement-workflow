@@ -1,0 +1,15 @@
+{
+  "name": "agent-workflows",
+  "owner": {
+    "name": "Jeff"
+  },
+  "description": "Portable coding-agent workflows for Claude Code.",
+  "plugins": [
+    {
+      "name": "basics",
+      "source": "./platforms/claude",
+      "description": "Foundational coding-agent skills and workflow delivery for Claude Code.",
+      "version": "2.1.5"
+    }
+  ]
+}
