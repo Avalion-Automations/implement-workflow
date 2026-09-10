@@ -62,6 +62,26 @@ function invoke(command, input, home) {
   }
 }
 
+function invokeTemplate(command, input, source, home) {
+  mkdirSync(home, { recursive: true });
+  const eventPath = join(home, "hook-template-event.json");
+  const outputPath = join(home, "hook-template-output.json");
+  writeFileSync(eventPath, JSON.stringify(input));
+  const inputDescriptor = openSync(eventPath, "r");
+  const outputDescriptor = openSync(outputPath, "w");
+  try {
+    const result = spawnSync("sh", ["-c", command], {
+      encoding: "utf8",
+      env: { ...hookEnvironment(home), PLUGIN_ROOT: source },
+      stdio: [inputDescriptor, outputDescriptor, "pipe"],
+    });
+    return { ...result, stdout: readFileSync(outputPath, "utf8") };
+  } finally {
+    closeSync(inputDescriptor);
+    closeSync(outputDescriptor);
+  }
+}
+
 function runStatus(destination, args, home) {
   return spawnSync(process.execPath, [join(destination, "skills", "build", "scripts", "build-status.mjs"), ...args], {
     encoding: "utf8",
@@ -104,7 +124,7 @@ test("installation materializes every root hook and repeats after an update", ()
       assert.equal(config.hooks[event].length, 1);
       assert.equal(config.hooks[event][0].hooks.length, 1);
       const hook = config.hooks[event][0].hooks[0];
-      assert.equal(hook.timeout, 10);
+      assert.equal(hook.timeout, 3);
       assert.match(hook.command, /^node "\//);
       assert.match(hook.command, /skills\/build\/scripts\/build-status\.mjs" hook$/);
     }
@@ -114,6 +134,29 @@ test("installation materializes every root hook and repeats after an update", ()
     const second = installFrom(source, destination);
     assert.equal(second.materialized.changed, true);
     assert.equal(readFileSync(join(destination, "hooks", "hooks.json"), "utf8"), firstMaterialized);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("source hooks use Codex's supported timeout and execute with the active plugin root", () => {
+  const { root, source, home } = fixture();
+  try {
+    const config = JSON.parse(readFileSync(join(source, "hooks", "hooks.json"), "utf8"));
+    for (const eventName of ["PreToolUse", "PostToolUse", "SubagentStart", "SubagentStop", "Stop"]) {
+      const hook = config.hooks[eventName][0].hooks[0];
+      assert.equal(hook.timeout, 3, `${eventName} must use Codex's 1-3 second timeout range`);
+      const result = invokeTemplate(hook.command, {
+        session_id: "source-hook-session",
+        cwd: root,
+        hook_event_name: eventName,
+        tool_name: "Bash",
+        tool_input: { command: "echo nothing" },
+        tool_response: { exit_code: 0 },
+      }, source, home);
+      assert.equal(result.status, 0, result.stderr);
+      assert.deepEqual(JSON.parse(result.stdout), {});
+    }
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

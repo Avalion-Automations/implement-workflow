@@ -32,7 +32,10 @@ function listFiles(directory, base = directory) {
 }
 
 function omit(path) {
-  return omitted.has(path) || path.startsWith("build/assets/dashboard/");
+  return omitted.has(path)
+    || path.startsWith("build/assets/dashboard/")
+    // This skill performs Codex-specific installation and hook materialization.
+    || path.startsWith("plugin-update/");
 }
 
 function adapt(content) {

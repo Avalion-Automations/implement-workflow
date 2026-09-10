@@ -1,0 +1,4 @@
+interface:
+  display_name: Plugin update
+  short_description: Install and verify Basics plugin updates
+  default_prompt: Use $plugin-update to package, install, and verify the updated Basics Codex plugin and its lifecycle hooks.

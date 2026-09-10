@@ -6,7 +6,7 @@
         "type": "command",
         "command": "node \"$PLUGIN_ROOT/skills/build/scripts/build-status.mjs\" hook",
         "commandWindows": "node \"%PLUGIN_ROOT%\\skills\\build\\scripts\\build-status.mjs\" hook",
-        "timeout": 10,
+        "timeout": 3,
         "statusMessage": "Updating Basics agent status"
       }]
     }],
@@ -15,7 +15,7 @@
         "type": "command",
         "command": "node \"$PLUGIN_ROOT/skills/build/scripts/build-status.mjs\" hook",
         "commandWindows": "node \"%PLUGIN_ROOT%\\skills\\build\\scripts\\build-status.mjs\" hook",
-        "timeout": 10,
+        "timeout": 3,
         "statusMessage": "Closing Basics agent status"
       }]
     }],
@@ -25,7 +25,7 @@
         "type": "command",
         "command": "node \"$PLUGIN_ROOT/skills/build/scripts/build-status.mjs\" hook",
         "commandWindows": "node \"%PLUGIN_ROOT%\\skills\\build\\scripts\\build-status.mjs\" hook",
-        "timeout": 10,
+        "timeout": 3,
         "statusMessage": "Marking Basics task active"
       }]
     }],
@@ -35,7 +35,7 @@
         "type": "command",
         "command": "node \"$PLUGIN_ROOT/skills/build/scripts/build-status.mjs\" hook",
         "commandWindows": "node \"%PLUGIN_ROOT%\\skills\\build\\scripts\\build-status.mjs\" hook",
-        "timeout": 10,
+        "timeout": 3,
         "statusMessage": "Recording Basics tool outcome"
       }]
     }],
@@ -44,7 +44,7 @@
         "type": "command",
         "command": "node \"$PLUGIN_ROOT/skills/build/scripts/build-status.mjs\" hook",
         "commandWindows": "node \"%PLUGIN_ROOT%\\skills\\build\\scripts\\build-status.mjs\" hook",
-        "timeout": 10,
+        "timeout": 3,
         "statusMessage": "Reconciling Basics task status"
       }]
     }]

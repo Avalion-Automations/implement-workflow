@@ -46,7 +46,14 @@ test("Claude adapter exposes every canonical skill and required contract", () =>
   assert.ok(existsSync(join(root, "CLAUDE.md")), "missing repository CLAUDE.md");
   assert.ok(existsSync(join(adapter, ".claude-plugin", "plugin.json")), "missing Claude plugin manifest");
   assert.ok(existsSync(join(adapter, "README.md")), "missing Claude adapter README");
-  assert.deepEqual(directories(packaged), directories(canonical));
+  assert.deepEqual(
+    directories(packaged),
+    directories(canonical).filter((name) => name !== "plugin-update")
+  );
+});
+
+test("Claude adapter excludes the Codex-only plugin update workflow", () => {
+  assert.equal(existsSync(join(packaged, "plugin-update")), false);
 });
 
 test("Claude package excludes Codex-only runtime identifiers", () => {
