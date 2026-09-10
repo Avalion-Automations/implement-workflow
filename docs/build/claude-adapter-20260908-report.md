@@ -35,7 +35,7 @@ Approved plan `e86ba41ac3b410612c792aab4ec9683c7c6a192b90d77d031ae6ded39018b7c8`
 - The Claude adapter regression suite passed all 12 checks, including native marketplace installation metadata, `/basics:<skill>` namespacing, model/effort exclusion, generated-package drift, and host-path self-containment.
 - All 23 packaged Claude skills passed the bundled non-strict checker. Compatible packaged Node and Python script suites passed.
 - The unchanged workflow tests, suite lint, checker regression tests, dashboard tests, isolated dashboard production build, Codex drift check, and installer unit test passed.
-- Claude Code is not installed on this host, so an actual `claude --plugin-dir platforms/claude` smoke test remains an external verification step.
+- Claude Code CLI 2.1.263 is installed, but no user authentication is configured (`claude auth status` reports `loggedIn: false`). The actual `claude --plugin-dir platforms/claude` runtime smoke test is deliberately deferred at the user's direction; it must be run after Claude authentication before claiming end-to-end runtime verification.
 - Strict generated-Codex checks reproduce pre-existing progressive-disclosure warnings in the same nine skills on the untouched base checkout. This adapter introduces no new strict-check failure; remediation is outside the approved Claude-adapter scope.
 
 ## Proxy Budget Warnings
@@ -44,4 +44,4 @@ None.
 
 ## Readiness
 
-Ready for explicit merge approval
+Ready for merge with the Claude runtime smoke-test warning deferred by user direction
