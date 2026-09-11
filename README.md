@@ -4,6 +4,9 @@
 agent skills and workflows. `.agents/skills/` is canonical. Hosts package or
 sync that source into their native skill discovery layout.
 
+The Basics product-generation version and its independently versioned host
+adapters are defined in [docs/versioning.md](docs/versioning.md).
+
 ## Layout
 
 - `.agents/skills/` — shared skills, scripts, references, and assets.

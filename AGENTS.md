@@ -4,9 +4,13 @@
 
 - Treat `.agents/skills/` and `platforms/codex/` as canonical.
 - Treat `plugins/basics/` as generated. After canonical changes, regenerate it with `node scripts/sync-codex-basics.mjs`, then require `node scripts/sync-codex-basics.mjs --check` to pass.
+- Treat `product.json` as the canonical Basics product-generation version. Product releases and host adapters have independent semantic-version streams.
 - Preserve a single version in `platforms/codex/plugin.json` and `plugins/basics/.codex-plugin/plugin.json`.
-- Every repository change that will be committed or pushed must increment the plugin's semantic version by at least one patch level and replace the Codex cachebuster. A new cachebuster with an unchanged semantic version is not a version increment. Apply this rule to policy, documentation, skill, script, hook, metadata, packaging, and generated-package changes; there are no publishable-change exceptions.
-- Never commit, push, publish, or install changed plugin content while its semantic version still matches the version at the pre-change commit. Regenerate `plugins/basics/` after changing the canonical version and verify both manifests contain the same new version.
+- Format adapter versions as `<semver>+<adapter>.<YYYYMMDDHHMMSS>`, using `codex` or `claude` as the adapter identifier.
+- Increment only the version streams whose versioned content changes. Shared canonical-skill changes affect every generated adapter; adapter-specific changes affect only that adapter. Product-only release metadata does not force an unchanged adapter version to advance.
+- Every Codex package change that will be committed, pushed, published, or installed must increment the Codex semantic version by at least one patch level and replace its cachebuster. A new cachebuster with an unchanged semantic version is not a version increment. Apply this to policy, documentation, skill, script, hook, metadata, packaging, and generated-package changes that affect the Codex deliverable.
+- Apply the same rule independently to changed Claude adapter content, using a Claude semantic increment and a fresh `+claude.<cachebuster>` suffix.
+- Never commit, push, publish, or install changed versioned content while its relevant semantic version still matches the pre-change commit. Regenerate generated adapters after canonical changes and verify every canonical/generated or manifest/marketplace version pair agrees.
 
 ## Mandatory hook refresh for Codex updates
 
