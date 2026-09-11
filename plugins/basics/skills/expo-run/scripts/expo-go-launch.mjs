@@ -115,17 +115,27 @@ function timeoutFromEnvironment(value) {
   return parsed;
 }
 
-function streamChildOutput(child, onChunk, stdout, stderr) {
-  child.stdout?.on("data", (chunk) => {
+function streamChildOutput(child, onOutput, stdout, stderr) {
+  const tails = new Map();
+  const handle = (stream, destination) => (chunk) => {
     const output = String(chunk);
-    stdout.write(output);
-    onChunk(output);
-  });
-  child.stderr?.on("data", (chunk) => {
-    const output = String(chunk);
-    stderr.write(output);
-    onChunk(output);
-  });
+    destination.write(output);
+    const combined = `${tails.get(stream) ?? ""}${output}`;
+    const boundary = combined.search(/\s[^\s]*$/);
+    if (boundary === -1) {
+      tails.set(stream, combined);
+      return;
+    }
+    const end = boundary + 1;
+    onOutput(combined.slice(0, end));
+    tails.set(stream, combined.slice(end));
+  };
+  child.stdout?.on("data", handle("stdout", stdout));
+  child.stderr?.on("data", handle("stderr", stderr));
+  return () => {
+    for (const tail of tails.values()) onOutput(tail);
+    tails.clear();
+  };
 }
 
 export async function runExpo({
@@ -137,6 +147,7 @@ export async function runExpo({
   stdout = process.stdout,
   stderr = process.stderr,
   render = terminalQrRenderer,
+  signalSource = process,
 } = {}) {
   const root = resolve(projectRoot);
   const args = expoArguments(mode);
@@ -152,17 +163,18 @@ export async function runExpo({
   let timeout;
   let timedOut = false;
   let requestedSignal = null;
+  let childClosed = false;
   const localEndpoints = new Set();
 
   const stopOwnedChild = (signal) => {
     if (!requestedSignal) requestedSignal = signal;
-    if (!child.killed) child.kill(signal);
+    if (!childClosed) child.kill(signal);
   };
   const forwardSignal = (signal) => () => stopOwnedChild(signal);
   const onSigint = forwardSignal("SIGINT");
   const onSigterm = forwardSignal("SIGTERM");
-  process.once("SIGINT", onSigint);
-  process.once("SIGTERM", onSigterm);
+  signalSource.on("SIGINT", onSigint);
+  signalSource.on("SIGTERM", onSigterm);
 
   const publish = (url) => {
     if (publishedUrl || mode !== "tunnel") return;
@@ -181,7 +193,7 @@ export async function runExpo({
     });
   };
 
-  streamChildOutput(child, (output) => {
+  const flushOutput = streamChildOutput(child, (output) => {
     for (const endpoint of extractLocalEndpoints(output)) localEndpoints.add(endpoint);
     const url = extractExpoUrl(output);
     if (url) publish(url);
@@ -204,9 +216,11 @@ export async function runExpo({
       rejectRun(error);
     });
     child.once("close", async (code, signal) => {
+      childClosed = true;
+      flushOutput();
       clearTimeout(timeout);
-      process.removeListener("SIGINT", onSigint);
-      process.removeListener("SIGTERM", onSigterm);
+      signalSource.removeListener("SIGINT", onSigint);
+      signalSource.removeListener("SIGTERM", onSigterm);
       try {
         await publishedPromise;
       } catch (error) {
