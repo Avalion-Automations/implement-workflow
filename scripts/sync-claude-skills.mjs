@@ -24,6 +24,7 @@ const omitted = new Set([
 function listFiles(directory, base = directory) {
   const result = [];
   for (const entry of readdirSync(directory, { withFileTypes: true })) {
+    if (entry.isDirectory() && (entry.name === "node_modules" || entry.name === "__pycache__")) continue;
     const absolute = join(directory, entry.name);
     if (entry.isDirectory()) result.push(...listFiles(absolute, base));
     else if (entry.isFile()) result.push(relative(base, absolute));
