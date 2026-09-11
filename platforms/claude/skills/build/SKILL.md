@@ -58,8 +58,13 @@ when the finding is not already reproducibly isolated, uses
 and [/basics:hypothesis-evaluation](../hypothesis-evaluation/SKILL.md), in
 that order. Record a limitation rather than claiming an unsupported skill ran.
 
-Before Brainstorm, initialize the ledger with the commands in the
-source. Disclose browser or telemetry failure without weakening gates.
+Before Brainstorm, initialize status and start/reuse the dashboard:
+
+```bash
+node <tool> serve --state-dir <state-dir> --runs-dir <state-root>/build-runs --open
+```
+
+Keep it running and report its URL.
 
 ## Fast workflow and time gate
 

@@ -1,0 +1,4 @@
+interface:
+  display_name: Fix release
+  short_description: Release a one-off patch fix through main and devel
+  default_prompt: Use $fix-release to prepare and merge a verified one-off patch release from devel through main and back to devel.

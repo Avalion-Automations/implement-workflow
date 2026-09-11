@@ -30,6 +30,7 @@ Set `<tool>` to the path provided by Build and `<state-dir>` to its run status d
 
 ```bash
 node <tool> init --state-dir <state-dir> --run <run-id> --repo <repo> --base <sha> --branch <branch> --workspace <integration-worktree>
+node <tool> serve --state-dir <state-dir> --runs-dir <state-root>/build-runs --host 127.0.0.1 --port 4173 --api-port 4174 --open
 node <tool> team --state-dir <state-dir> --id blue --status active --message "Specialists dispatched"
 node <tool> agent --state-dir <state-dir> --id blue-orchestrator --team blue --role orchestrator --model gpt-5.6-terra --effort xhigh --status active
 node <tool> task --state-dir <state-dir> --id blue-ui --team blue --kind task --title "Implement accessible composer" --status queued --verification-command "npm test -- --runInBand"
