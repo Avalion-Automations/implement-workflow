@@ -8,6 +8,7 @@ description: Run a bounded-unattended feature workflow with one approval only fo
 Deliver a reviewed integration branch while keeping planning, execution, and merge authority separate. Never merge to a protected user branch without explicit current approval.
 
 Read [references/orchestration-contract.md](references/orchestration-contract.md) and [references/status-protocol.md](references/status-protocol.md). Use `scripts/build-handoff.mjs` for manifests, ledger, approvals, receipts, and reporting.
+Dashboard code and tests live in `assets/dashboard/`.
 
 ## Source and run setup
 
