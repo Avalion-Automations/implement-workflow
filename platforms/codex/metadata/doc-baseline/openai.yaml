@@ -1,0 +1,4 @@
+interface:
+  display_name: "Doc Baseline"
+  short_description: "Turn discovery into promotable docs"
+  default_prompt: "Use $doc-baseline to interview me and scaffold a draft-only documentation baseline."

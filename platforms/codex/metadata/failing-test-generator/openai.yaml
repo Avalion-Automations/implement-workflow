@@ -1,0 +1,4 @@
+interface:
+  display_name: "Failing Test Generator"
+  short_description: "Turn contracts into failing tests"
+  default_prompt: "Use $failing-test-generator to derive a contract and seed failing tests in an isolated branch."

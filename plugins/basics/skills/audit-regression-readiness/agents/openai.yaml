@@ -1,0 +1,4 @@
+interface:
+  display_name: "Audit Regression Readiness"
+  short_description: "Audit how safely tests preserve behavior"
+  default_prompt: "Use $audit-regression-readiness to audit whether this project's observable behavior is protected before more changes."

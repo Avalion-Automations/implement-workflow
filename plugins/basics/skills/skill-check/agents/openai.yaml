@@ -1,0 +1,4 @@
+interface:
+  display_name: "Skill Check"
+  short_description: "Lint and review Codex skill design"
+  default_prompt: "Use $skill-check to validate this Codex skill folder."

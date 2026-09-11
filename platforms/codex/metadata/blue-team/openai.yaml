@@ -1,0 +1,4 @@
+interface:
+  display_name: "Blue Team"
+  short_description: "Orchestrate implementation to green tests"
+  default_prompt: "Use $basics:blue-team to implement this task through isolated domain specialists."

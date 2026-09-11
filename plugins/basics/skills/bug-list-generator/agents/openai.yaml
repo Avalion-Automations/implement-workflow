@@ -1,0 +1,4 @@
+interface:
+  display_name: "Bug List Generator"
+  short_description: "Turn vague issues into reviewable bug lists"
+  default_prompt: "Use $bug-list-generator to turn these issues into a structured bug list."

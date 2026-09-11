@@ -1,4 +1,0 @@
-interface:
-  display_name: "Build"
-  short_description: "Fast scoped feature delivery with review"
-  default_prompt: "Use $implement:build to implement this approved-scope feature quickly on a reviewed integration branch."

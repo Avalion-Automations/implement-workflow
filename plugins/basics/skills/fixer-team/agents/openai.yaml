@@ -1,0 +1,4 @@
+interface:
+  display_name: "Fixer Team"
+  short_description: "Four-agent loop for verified bug repairs"
+  default_prompt: "Use $basics:fixer-team to repair this structured bug list."

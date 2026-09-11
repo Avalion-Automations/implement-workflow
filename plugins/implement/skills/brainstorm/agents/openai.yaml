@@ -1,4 +1,0 @@
-interface:
-  display_name: "Brainstorm"
-  short_description: "Reduce assumptions before implementation planning"
-  default_prompt: "Use $implement:brainstorm to turn this request into an assumption-checked handoff plan."

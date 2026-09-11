@@ -1,0 +1,4 @@
+interface:
+  display_name: "Run Ledger Times"
+  short_description: "Summarize durable workflow timing ledgers"
+  default_prompt: "Use $run-ledger-times to summarize my workflow ledgers as a Markdown timing table."
