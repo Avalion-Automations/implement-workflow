@@ -22,6 +22,34 @@ import {
   writeQrArtifact,
 } from "../.agents/skills/expo-run/scripts/expo-go-launch.mjs";
 
+async function createFakeExpoProject(prefix) {
+  const root = await mkdtemp(join(tmpdir(), prefix));
+  const moduleRoot = join(root, "node_modules");
+  await mkdir(join(moduleRoot, "expo", "bin"), { recursive: true });
+  await mkdir(join(moduleRoot, "@expo", "ngrok"), { recursive: true });
+  await mkdir(join(moduleRoot, "qrcode-terminal"), { recursive: true });
+  await writeFile(join(root, "package.json"), '{"name":"simulated-project"}\n');
+  await writeFile(join(moduleRoot, "expo", "package.json"), '{"name":"expo"}\n');
+  await writeFile(join(moduleRoot, "expo", "bin", "cli.js"), "");
+  await writeFile(join(moduleRoot, "@expo", "ngrok", "package.json"), '{"name":"@expo/ngrok"}\n');
+  await writeFile(join(moduleRoot, "qrcode-terminal", "index.js"), "exports.generate = () => {};\n");
+  return root;
+}
+
+function fakeExpoChild() {
+  const child = new EventEmitter();
+  child.stdout = new PassThrough();
+  child.stderr = new PassThrough();
+  child.killed = false;
+  child.signals = [];
+  child.kill = (signal) => {
+    child.killed = true;
+    child.signals.push(signal);
+    return true;
+  };
+  return child;
+}
+
 test("configures one-command tunnel and local launch scripts without disturbing package data", () => {
   const source = {
     name: "sample-app",
@@ -174,4 +202,82 @@ test("simulated Expo tunnel observes the published URL before emitting an identi
   assert.match(artifactContents, /QR FOR exp:\/\/simulated\.exp\.direct/);
   assert.match(artifactContents, /Expo Go URL: exp:\/\/simulated\.exp\.direct/);
   assert.equal(stderr.output, "");
+});
+
+test("reassembles published and local URLs split across stdout and stderr chunks", async () => {
+  const root = await createFakeExpoProject("expo-run-split-streams-");
+  const temporaryRoot = await mkdtemp(join(tmpdir(), "expo-run-split-artifact-"));
+  const child = fakeExpoChild();
+  const stdout = { output: "", write(chunk) { this.output += String(chunk); return true; } };
+  const stderr = { output: "", write(chunk) { this.output += String(chunk); return true; } };
+  const resultPromise = runExpo({
+    projectRoot: root,
+    temporaryRoot,
+    mode: "tunnel",
+    timeoutMs: 1_000,
+    stdout,
+    stderr,
+    spawnImpl: () => child,
+    render: () => async (url) => `QR FOR ${url}\n`,
+  });
+
+  child.stdout.write("Published: exp://simu");
+  child.stdout.write("lated.exp.direct\n");
+  child.stderr.write("Local: http://local");
+  child.stderr.write("host:8081\n");
+  child.stdout.end();
+  child.stderr.end();
+  child.emit("close", 0, null);
+
+  const result = await resultPromise;
+  assert.equal(result.url, "exp://simulated.exp.direct");
+  assert.deepEqual(result.localEndpoints, ["http://localhost:8081"]);
+  assert.match(stdout.output, /QR FOR exp:\/\/simulated\.exp\.direct/);
+  assert.match(stdout.output, /Observed local endpoint: http:\/\/localhost:8081/);
+});
+
+test("forwards SIGINT then SIGTERM and waits for owned child close", async () => {
+  const root = await createFakeExpoProject("expo-run-escalated-signals-");
+  const child = fakeExpoChild();
+  const signalSource = new EventEmitter();
+  const runPromise = runExpo({
+    projectRoot: root,
+    mode: "local",
+    spawnImpl: () => child,
+    signalSource,
+  });
+  let settled = false;
+  void runPromise.then(() => { settled = true; }, () => { settled = true; });
+
+  signalSource.emit("SIGINT");
+  signalSource.emit("SIGTERM");
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(settled, false, "parent launcher must remain pending until the owned child closes");
+  child.emit("close", 0, null);
+  await runPromise;
+
+  assert.deepEqual(child.signals, ["SIGINT", "SIGTERM"]);
+});
+
+test("forwards repeated SIGINT while waiting for owned child close", async () => {
+  const root = await createFakeExpoProject("expo-run-repeated-signals-");
+  const child = fakeExpoChild();
+  const signalSource = new EventEmitter();
+  const runPromise = runExpo({
+    projectRoot: root,
+    mode: "local",
+    spawnImpl: () => child,
+    signalSource,
+  });
+  let settled = false;
+  void runPromise.then(() => { settled = true; }, () => { settled = true; });
+
+  signalSource.emit("SIGINT");
+  signalSource.emit("SIGINT");
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(settled, false, "parent launcher must remain pending until the owned child closes");
+  child.emit("close", 0, null);
+  await runPromise;
+
+  assert.deepEqual(child.signals, ["SIGINT", "SIGINT"]);
 });
