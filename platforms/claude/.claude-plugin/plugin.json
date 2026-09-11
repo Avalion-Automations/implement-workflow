@@ -1,6 +1,6 @@
 {
   "name": "basics",
-  "version": "2.1.8+claude.20260911032007",
+  "version": "2.1.9+claude.20260911191104",
   "description": "Foundational coding-agent skills and workflow delivery for Claude Code.",
   "author": { "name": "Jeff" }
 }
