@@ -31,6 +31,7 @@ const build = readFileSync(join(suiteRoot, "build", "SKILL.md"), "utf8");
 if (!build.includes("Invoke `$basics:red-team` once") || !build.includes("At most one scoped Fixer/Judge pass")) errors.push("Build does not enforce the fast single-pass assurance boundary");
 if (!build.includes("time-budget") || !build.includes("45 minutes")) errors.push("Build does not enforce the elapsed-time gate");
 if (!build.includes("authorizations.json") || !build.includes("Consolidated approval")) errors.push("Build does not enforce consolidated authorization preflight");
+if (!build.includes("serve --state-dir <state-dir>") || !build.includes("--runs-dir <state-root>/build-runs")) errors.push("Build does not require dashboard startup before Brainstorm");
 for (const term of ["bounded-unattended", "derived values", "sandbox/network grants", "applicable operation IDs"]) {
   if (!build.includes(term)) errors.push(`Build does not enforce unattended authorization semantics: ${term}`);
 }
