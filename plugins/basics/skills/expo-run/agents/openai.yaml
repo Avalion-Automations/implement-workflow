@@ -1,0 +1,4 @@
+interface:
+  display_name: "Expo Run"
+  short_description: "Run Expo Go with a verified terminal QR"
+  default_prompt: "Use $expo-run to configure or launch this Expo project with tunnel-first Expo Go and a local web alternative."
