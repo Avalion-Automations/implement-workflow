@@ -1,19 +1,24 @@
 import assert from "node:assert/strict";
-import { mkdtemp, readFile, writeFile } from "node:fs/promises";
+import { EventEmitter } from "node:events";
+import { mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { PassThrough } from "node:stream";
 import test from "node:test";
 
 import {
   LOCAL_SCRIPT,
   TUNNEL_SCRIPT,
   configurePackage,
+  configureProject,
   inspectPackage,
 } from "../.agents/skills/expo-run/scripts/configure-expo-run.mjs";
 import {
   expoArguments,
   extractExpoUrl,
   formatReadyOutput,
+  qrArtifactPath,
+  runExpo,
   writeQrArtifact,
 } from "../.agents/skills/expo-run/scripts/expo-go-launch.mjs";
 
@@ -100,4 +105,73 @@ test("configuration preview is representable without writing the package file", 
 
   assert.equal(preview.scripts.start, TUNNEL_SCRIPT);
   assert.equal(await readFile(packagePath, "utf8"), original);
+});
+
+test("configuration rejects a non-Expo project without writing it", async () => {
+  const root = await mkdtemp(join(tmpdir(), "expo-run-non-expo-"));
+  const packagePath = join(root, "package.json");
+  const original = '{"name":"not-expo"}\n';
+  await writeFile(packagePath, original);
+
+  await assert.rejects(() => configureProject({ projectRoot: root, write: true }), /does not declare.*expo/i);
+  assert.equal(await readFile(packagePath, "utf8"), original);
+});
+
+test("simulated Expo tunnel observes the published URL before emitting an identical QR artifact", async () => {
+  const root = await mkdtemp(join(tmpdir(), "expo-run-simulated-project-"));
+  const temporaryRoot = await mkdtemp(join(tmpdir(), "expo-run-simulated-artifact-"));
+  const moduleRoot = join(root, "node_modules");
+  await mkdir(join(moduleRoot, "expo", "bin"), { recursive: true });
+  await mkdir(join(moduleRoot, "@expo", "ngrok"), { recursive: true });
+  await mkdir(join(moduleRoot, "qrcode-terminal"), { recursive: true });
+  await writeFile(join(root, "package.json"), '{"name":"simulated-project"}\n');
+  await writeFile(join(moduleRoot, "expo", "package.json"), '{"name":"expo"}\n');
+  await writeFile(
+    join(moduleRoot, "expo", "bin", "cli.js"),
+    'console.log(`Expo arguments: ${process.argv.slice(2).join(" ")}`); console.log("Local: http://localhost:8081"); console.log("Published: exp://simulated.exp.direct");\n',
+  );
+  await writeFile(join(moduleRoot, "@expo", "ngrok", "package.json"), '{"name":"@expo/ngrok"}\n');
+  await writeFile(join(moduleRoot, "qrcode-terminal", "index.js"), 'exports.generate = (url, options, done) => done(`QR FOR ${url}\\n`);\n');
+
+  const spawned = [];
+  const spawnImpl = (command, args, options) => {
+    spawned.push({ command, args, options });
+    const child = new EventEmitter();
+    child.stdout = new PassThrough();
+    child.stderr = new PassThrough();
+    child.killed = false;
+    child.kill = () => { child.killed = true; return true; };
+    setImmediate(() => {
+      child.stdout.write("Expo arguments: start --go --tunnel --clear\n");
+      child.stdout.write("Local: http://localhost:8081\n");
+      child.stdout.write("Published: exp://simulated.exp.direct\n");
+      child.stdout.end();
+      child.stderr.end();
+      child.emit("close", 0, null);
+    });
+    return child;
+  };
+  const stdout = { output: "", write(chunk) { this.output += String(chunk); return true; } };
+  const stderr = { output: "", write(chunk) { this.output += String(chunk); return true; } };
+  const result = await runExpo({
+    projectRoot: root,
+    temporaryRoot,
+    mode: "tunnel",
+    timeoutMs: 1_000,
+    stdout,
+    stderr,
+    spawnImpl,
+  });
+
+  assert.equal(result.url, "exp://simulated.exp.direct");
+  assert.equal(spawned.length, 1);
+  assert.deepEqual(spawned[0].args.slice(1), ["start", "--go", "--tunnel", "--clear"]);
+  assert.match(stdout.output, /Expo arguments: start --go --tunnel --clear/);
+  assert.match(stdout.output, /QR FOR exp:\/\/simulated\.exp\.direct/);
+  assert.match(stdout.output, /Observed local endpoint: http:\/\/localhost:8081/);
+  const artifact = qrArtifactPath({ projectRoot: root, temporaryRoot });
+  const artifactContents = await readFile(artifact, "utf8");
+  assert.match(artifactContents, /QR FOR exp:\/\/simulated\.exp\.direct/);
+  assert.match(artifactContents, /Expo Go URL: exp:\/\/simulated\.exp\.direct/);
+  assert.equal(stderr.output, "");
 });
