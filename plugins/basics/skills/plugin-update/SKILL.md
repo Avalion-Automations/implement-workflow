@@ -29,6 +29,24 @@ node --test plugins/basics/scripts/install-plugin.test.mjs
 codex plugin list
 ```
 
+If installation reports that the installed plugin is stale, inspect
+`codex plugin list --json` first. For a local marketplace, do not use
+`codex plugin marketplace upgrade`; that command only refreshes Git
+marketplaces. Obtain explicit approval naming `basics@<marketplace>` and the
+information-loss consequence before replacing the installed entry, then run:
+
+```bash
+codex plugin remove basics@<marketplace> --json
+node plugins/basics/scripts/install-plugin.mjs install --marketplace <marketplace>
+```
+
+Treat removal and reinstallation as one recovery operation. Stop immediately
+if removal succeeds but reinstallation fails, preserve the failure output, and
+report that the plugin is no longer installed. Never delete a cache directory,
+edit Codex configuration, or alter trust hashes manually. Do not use this
+recovery when the marketplace is Git-backed; refresh that marketplace through
+the supported Codex command instead.
+
 The installer must report the expected version and its absolute cache
 destination. Verify that destination's `hooks/hooks.json` has no
 `$PLUGIN_ROOT` or `%PLUGIN_ROOT%` token, has exactly one handler for each of

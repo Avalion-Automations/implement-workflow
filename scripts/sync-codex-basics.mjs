@@ -13,6 +13,7 @@ const checkOnly = process.argv.includes("--check");
 function files(root, base = root) {
   const result = [];
   for (const entry of readdirSync(root, { withFileTypes: true })) {
+    if (entry.isDirectory() && (entry.name === "node_modules" || entry.name === "__pycache__")) continue;
     const absolute = join(root, entry.name);
     if (entry.isDirectory()) result.push(...files(absolute, base));
     else if (entry.isFile()) result.push(relative(base, absolute));
