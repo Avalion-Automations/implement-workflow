@@ -176,7 +176,8 @@ After changing this suite, run:
 
 ```bash
 node --test build/scripts/build-handoff.test.mjs
-python3 <skill-check>/scripts/check_skill.py --strict <each-skill>
+node <skill-check>/scripts/quick-validate.mjs <each-skill>
+node <skill-check>/scripts/check-skill.mjs --strict <each-skill>
 ```
 
 If a package build fails only because shared `node_modules` is read-only, run the equivalent Vite build with `--configLoader runner` and record the environment caveat.

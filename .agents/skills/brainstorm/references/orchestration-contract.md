@@ -191,8 +191,8 @@ node --test build/scripts/build-handoff.test.mjs
 node build/scripts/check-build-suite.mjs <suite-root>
 npm test --prefix build/assets/dashboard
 npm run build --prefix build/assets/dashboard
-python3 <skill-creator>/scripts/quick_validate.py <each-skill>
-python3 <skill-check>/scripts/check_skill.py --strict <each-skill>
+node <skill-check>/scripts/quick-validate.mjs <each-skill>
+node <skill-check>/scripts/check-skill.mjs --strict <each-skill>
 ```
 
 If a package build fails only because shared `node_modules` is read-only, run the equivalent Vite build with `--configLoader runner` and record the environment caveat.
